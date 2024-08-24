@@ -205,21 +205,27 @@ func (r *Repository) ListFloors(ctx context.Context) ([]*domain.Floor, error) {
 }
 
 func (r *Repository) SaveFloor(ctx context.Context, floor *domain.Floor) error {
+	r.log.Info(ctx, "Saving floor", "floor_number", floor.Number())
 	stmt, err := r.db.PrepareContext(ctx, `
 		INSERT OR REPLACE INTO floors (floor_number, up_button_active, down_button_active)
 		VALUES (?, ?, ?)
 	`)
 	if err != nil {
+		r.log.Error(ctx, "Failed to prepare statement", "error", err)
 		return fmt.Errorf("failed to prepare statement: %w", err)
 	}
 	defer stmt.Close()
 
+	r.log.Debug(ctx, "Executing SQL", "floor_number", floor.Number(), "up_button", floor.GetUpButtonActive(), "down_button", floor.GetDownButtonActive())
+
 	var number int
 	err = stmt.QueryRow(floor.Number()).Scan(&number)
 	if err != nil {
+		r.log.Error(ctx, "Failed to save floor", "error", err)
 		return fmt.Errorf("failed to save floor: %w", err)
 	}
 	floor.SetNumber(number)
+	r.log.Info(ctx, "Floor saved successfully", "floor_number", floor.Number())
 	return nil
 }
 

@@ -24,8 +24,15 @@ func (f *Floor) SetUpButtonActive(active bool){
 	f.upButtonActive = active
 }
 func (f *Floor) SetDownButtonActive(active bool){
-	f.upButtonActive = active
+	f.downButtonActive = active
 }
+func (f *Floor) GetUpButtonActive()bool{
+	return f.upButtonActive
+}
+func (f *Floor) GetDownButtonActive()bool{
+	return f.downButtonActive
+}
+
 
 
 // RequestLift activates the appropriate call button

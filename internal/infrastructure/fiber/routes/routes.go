@@ -20,7 +20,7 @@ func SetupRoutes(app *fiber.App, liftHandler *handlers.LiftHandler, floorHandler
 	authConfig := middleware.Config{
 		JWTSecret: "your-jwt-secret", // In production, use a secure method to store this
 	}
-	authMiddleware := middleware.New(authConfig)
+	_ = middleware.New(authConfig)
 
 	// Swagger documentation
 	app.Use("/docs", filesystem.New(filesystem.Config{
@@ -42,28 +42,28 @@ func SetupRoutes(app *fiber.App, liftHandler *handlers.LiftHandler, floorHandler
 
 	system := api.Group("/system")
 
-	system.Post("/configure", authMiddleware, systemHandler.ConfigureSystem)
+	system.Post("/configure",  systemHandler.ConfigureSystem)
 
 	system.Get("/configuration", systemHandler.GetSystemConfiguration)
 	system.Get("/status", systemHandler.GetSystemStatus)
-	system.Post("/reset", authMiddleware, systemHandler.ResetSystem)
-	system.Get("/metrics", authMiddleware, systemHandler.GetSystemMetrics)
-	system.Post("/simulate-traffic", authMiddleware, systemHandler.SimulateTraffic)
+	system.Post("/reset",  systemHandler.ResetSystem)
+	system.Get("/metrics",  systemHandler.GetSystemMetrics)
+	system.Post("/simulate-traffic",  systemHandler.SimulateTraffic)
 
 	// Lift routes
 	lifts := api.Group("/lifts")
 	lifts.Get("/", liftHandler.ListLifts)
 	lifts.Get("/:id", liftHandler.GetLift)
-	lifts.Post("/:id/move", authMiddleware, liftHandler.MoveLift)
-	lifts.Post("/assign", authMiddleware, liftHandler.AssignLiftToFloor)
-	lifts.Put("/:id/status", authMiddleware, liftHandler.SetLiftStatus)
+	lifts.Post("/:id/move",  liftHandler.MoveLift)
+	lifts.Post("/assign",  liftHandler.AssignLiftToFloor)
+	lifts.Put("/:id/status",  liftHandler.SetLiftStatus)
 
 	// Floor routes
 	floors := api.Group("/floors")
 	floors.Get("/", floorHandler.ListFloors)
 	floors.Get("/:floorNum", floorHandler.GetFloorStatus)
 	floors.Post("/:floorNum/call", floorHandler.CallLift)
-	floors.Post("/:floorNum/reset", authMiddleware, floorHandler.ResetFloorButtons)
+	floors.Post("/:floorNum/reset",  floorHandler.ResetFloorButtons)
 	floors.Get("/active-calls", floorHandler.GetActiveFloorCalls)
 
 	// WebSocket route for real-time updates

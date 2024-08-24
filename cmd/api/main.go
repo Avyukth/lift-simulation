@@ -12,7 +12,6 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	// "github.com/gofiber/fiber/v2/middleware/cors"
-	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 
 	"github.com/Avyukth/lift-simulation/internal/application/services"
@@ -138,10 +137,10 @@ func run(ctx context.Context, log *logger.Logger, fiberLog *logger.FiberLogger) 
 	})
 
 	app.Use(recover.New())
-	app.Use(cors.New(cors.Config{
-		AllowOrigins: "http://localhost:6000", // Replace with your web app's origin
-		AllowMethods: "GET, POST, PUT, DELETE, OPTIONS",
-	}))
+	// app.Use(cors.New(cors.Config{
+	// 	AllowOrigins: "http://localhost:6000", // Replace with your web app's origin
+	// 	AllowMethods: "GET, POST, PUT, DELETE, OPTIONS",
+	// }))
 
 	routes.SetupRoutes(app, liftHandler, floorHandler, systemHandler, hub, fiberLog)
 	// Add a test route
