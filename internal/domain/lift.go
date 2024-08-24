@@ -162,3 +162,7 @@ func (l *Lift) SetStatus(status LiftStatus) {
 func (l *Lift) SetCapacity(capacity int) {
     l.capacity = capacity
 }
+
+func (l *Lift) Capacity() int {
+    return l.capacity
+}

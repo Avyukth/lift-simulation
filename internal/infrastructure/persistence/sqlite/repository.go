@@ -4,11 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"reflect"
 
-	_ "github.com/mattn/go-sqlite3"
-	"github.com/Avyukth/lift-simulation/internal/domain"
 	"github.com/Avyukth/lift-simulation/internal/application/ports"
+	"github.com/Avyukth/lift-simulation/internal/domain"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 // Repository implements the Repository interface using SQLite
@@ -173,8 +172,8 @@ func (r *Repository) GetFloor(ctx context.Context, floorNum int) (*domain.Floor,
 		return nil, fmt.Errorf("failed to get floor: %w", err)
 	}
 	floor.SetNumber(number)
-	floor.UpButtonActive = upButtonActive
-	floor.DownButtonActive = downButtonActive
+	floor.SetUpButtonActive(upButtonActive)
+	floor.SetDownButtonActive(downButtonActive)
 	return &floor, nil
 }
 
@@ -196,8 +195,8 @@ func (r *Repository) ListFloors(ctx context.Context) ([]*domain.Floor, error) {
 			return nil, fmt.Errorf("failed to scan floor: %w", err)
 		}
 		floor.SetNumber(number)
-		floor.UpButtonActive = upButtonActive
-		floor.DownButtonActive = downButtonActive
+		floor.SetUpButtonActive(upButtonActive)
+		floor.SetDownButtonActive(downButtonActive)
 		floors = append(floors, &floor)
 	}
 	return floors, nil

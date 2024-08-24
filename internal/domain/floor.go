@@ -20,6 +20,13 @@ func NewFloor(number int) *Floor {
 func (f *Floor) Number() int {
 	return f.number
 }
+func (f *Floor) SetUpButtonActive(active bool){
+	f.upButtonActive = active
+}
+func (f *Floor) SetDownButtonActive(active bool){
+	f.upButtonActive = active
+}
+
 
 // RequestLift activates the appropriate call button
 func (f *Floor) RequestLift(direction Direction) error {
@@ -90,4 +97,8 @@ func NewLiftAssignedEvent(liftID string, floorNum int) Event {
             FloorNumber: floorNum,
         },
     }
+}
+// Add this setter method
+func (f *Floor) SetNumber(number int) {
+    f.number = number
 }
