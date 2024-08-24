@@ -52,7 +52,7 @@ func main() {
 
 func run(ctx context.Context, log *logger.Logger, fiberLog *logger.FiberLogger) error {
 	// -------------------------------------------------------------------------
-	// GOMAXPROCS
+	GOMAXPROCS := runtime.NumCPU()
 
 	log.Info(ctx, "startup", "GOMAXPROCS", runtime.GOMAXPROCS(0))
 
