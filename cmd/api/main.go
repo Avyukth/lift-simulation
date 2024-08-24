@@ -79,7 +79,7 @@ func run(ctx context.Context, log *logger.Logger, fiberLog *logger.FiberLogger) 
 
 	log.Info(ctx, "startup", "status", "initializing database support", "path", cfg.DB.Path)
 
-	repo, err := sqlite.NewRepository(cfg.DB.Path)
+	repo, err := sqlite.NewRepository(cfg.DB.Path, log)
 	if err != nil {
 		return fmt.Errorf("connecting to db: %w", err)
 	}
