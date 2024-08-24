@@ -5,18 +5,20 @@ import (
 	"database/sql"
 	"fmt"
 
-	_ "github.com/mattn/go-sqlite3"
-	"github.com/Avyukth/lift-simulation/internal/domain"
 	"github.com/Avyukth/lift-simulation/internal/application/ports"
+	"github.com/Avyukth/lift-simulation/internal/domain"
+	"github.com/Avyukth/lift-simulation/pkg/logger"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 // Repository implements the Repository interface using SQLite
 type Repository struct {
 	db *sql.DB
+	log *logger.Logger
 }
 
 // NewRepository creates a new instance of the SQLite repository
-func NewRepository(dbPath string) (*Repository, error) {
+func NewRepository(dbPath string, log *logger.Logger) (*Repository, error) {
 	db, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %w", err)
@@ -30,7 +32,7 @@ func NewRepository(dbPath string) (*Repository, error) {
 		return nil, fmt.Errorf("failed to create tables: %w", err)
 	}
 
-	return &Repository{db: db}, nil
+	return &Repository{db: db, log: log}, nil
 }
 
 // createTables creates the necessary tables if they don't exist

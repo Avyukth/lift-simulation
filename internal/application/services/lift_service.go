@@ -7,6 +7,7 @@ import (
 	"github.com/Avyukth/lift-simulation/internal/application/ports"
 	"github.com/Avyukth/lift-simulation/internal/domain"
 	ws "github.com/Avyukth/lift-simulation/internal/infrastructure/fiber/websockets"
+	"github.com/Avyukth/lift-simulation/pkg/logger"
 )
 
 // LiftService handles the business logic for lift operations
@@ -14,14 +15,16 @@ type LiftService struct {
 	repo     ports.LiftRepository
 	eventBus ports.EventBus
 	wsHub    *ws.WebSocketHub
+	log  *logger.Logger
 }
 
 // NewLiftService creates a new instance of LiftService
-func NewLiftService(repo ports.LiftRepository, eventBus ports.EventBus, wsHub *ws.WebSocketHub) *LiftService {
+func NewLiftService(repo ports.LiftRepository, eventBus ports.EventBus, wsHub *ws.WebSocketHub, log *logger.Logger) *LiftService {
 	return &LiftService{
 		repo:     repo,
 		eventBus: eventBus,
 		wsHub:    wsHub,
+		log:      log,
 	}
 }
 
