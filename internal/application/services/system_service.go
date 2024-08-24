@@ -4,26 +4,30 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/Avyukth/lift-simulation/internal/domain"
 	"github.com/Avyukth/lift-simulation/internal/application/ports"
+	"github.com/Avyukth/lift-simulation/internal/domain"
+	"github.com/Avyukth/lift-simulation/pkg/logger"
 )
 
 // SystemService handles the business logic for overall system operations
 type SystemService struct {
 	repo     ports.SystemRepository
 	eventBus ports.EventBus
+	log      *logger.Logger
 }
 
 // NewSystemService creates a new instance of SystemService
-func NewSystemService(repo ports.SystemRepository, eventBus ports.EventBus) *SystemService {
+func NewSystemService(repo ports.SystemRepository, eventBus ports.EventBus,  log *logger.Logger) *SystemService {
 	return &SystemService{
 		repo:     repo,
 		eventBus: eventBus,
+		log:      log,
 	}
 }
 
 // ConfigureSystem sets up the lift system with the specified number of floors and lifts
 func (s *SystemService) ConfigureSystem(ctx context.Context, floors, lifts int) error {
+
 	if floors < 2 {
 		return fmt.Errorf("invalid number of floors: must be at least 2")
 	}
@@ -33,6 +37,7 @@ func (s *SystemService) ConfigureSystem(ctx context.Context, floors, lifts int) 
 	if lifts > floors {
 		return fmt.Errorf("invalid number of lifts: must be less than no of floor")
 	}
+	s.log.Info(ctx, "Configuring system", "total_floors", floors, "total_lifts", lifts)
 
 	system, err := domain.NewSystem(floors, lifts)
 	if err != nil{
@@ -40,21 +45,26 @@ func (s *SystemService) ConfigureSystem(ctx context.Context, floors, lifts int) 
 	}
 
 	if err := s.repo.SaveSystem(ctx, system); err != nil {
+		s.log.Error(ctx, "Failed to save system configuration", "error", err)
 		return fmt.Errorf("failed to save system configuration: %w", err)
 	}
 
 	// Initialize floors
 	for i := 1; i <= floors; i++ {
+		s.log.Debug(ctx, "Creating floor", "floor_number", i)
 		floor := domain.NewFloor(i)
 		if err := s.repo.SaveFloor(ctx, floor); err != nil {
+			s.log.Error(ctx, "Failed to save floor", "floor_number", i, "error", err)
 			return fmt.Errorf("failed to save floor %d: %w", i, err)
 		}
 	}
 
 	// Initialize lifts
 	for i := 1; i <= lifts; i++ {
+		s.log.Debug(ctx, "Creating lift", "lift_number", i)
 		lift := domain.NewLift(fmt.Sprintf("L%d", i))
 		if err := s.repo.SaveLift(ctx, lift); err != nil {
+			s.log.Debug(ctx, "Creating lift", "lift_number", i)
 			return fmt.Errorf("failed to save lift %d: %w", i, err)
 		}
 	}
@@ -62,9 +72,11 @@ func (s *SystemService) ConfigureSystem(ctx context.Context, floors, lifts int) 
 	// Publish an event about the system configuration
 	event := domain.NewSystemConfiguredEvent(floors, lifts)
 	if err := s.eventBus.Publish(ctx, event); err != nil {
+		s.log.Error(ctx, "Failed to publish event", "error", err)
 		return fmt.Errorf("failed to publish system configured event: %w", err)
 	}
 
+	s.log.Info(ctx, "System configuration completed successfully")
 	return nil
 }
 
