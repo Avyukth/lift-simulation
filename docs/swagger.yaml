@@ -1,0 +1,139 @@
+openapi: 3.1.0
+info:
+  title: Lift Simulation API
+  version: 1.0.0
+  description: API for managing a lift simulation system
+
+servers:
+  - url: https://api.subhrajit.me/projects/lift-simulation/v1/
+
+paths:
+  /system/configure:
+    post:
+      summary: Configure the lift system
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SystemConfig'
+      responses:
+        '200':
+          description: System configured successfully
+
+  /system/configuration:
+    get:
+      summary: Retrieve current system configuration
+      responses:
+        '200':
+          description: Current system configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemConfig'
+
+  /lifts:
+    get:
+      summary: List all lifts and their current states
+      responses:
+        '200':
+          description: List of all lifts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Lift'
+
+  /lifts/{liftId}/move:
+    post:
+      summary: Move a specific lift to a target floor
+      parameters:
+        - name: liftId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MoveRequest'
+      responses:
+        '202':
+          description: Move request accepted
+
+  /floors/{floorId}/call:
+    post:
+      summary: Call a lift to a specific floor
+      parameters:
+        - name: floorId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CallRequest'
+      responses:
+        '202':
+          description: Call request accepted
+
+components:
+  schemas:
+    SystemConfig:
+      type: object
+      properties:
+        floors:
+          type: integer
+          minimum: 2
+        lifts:
+          type: integer
+          minimum: 1
+      required:
+        - floors
+        - lifts
+
+    Lift:
+      type: object
+      properties:
+        id:
+          type: string
+        currentFloor:
+          type: integer
+        status:
+          type: string
+          enum: [IDLE, MOVING_UP, MOVING_DOWN, DOOR_OPENING, DOOR_CLOSING]
+      required:
+        - id
+        - currentFloor
+        - status
+
+    MoveRequest:
+      type: object
+      properties:
+        targetFloor:
+          type: integer
+      required:
+        - targetFloor
+
+    CallRequest:
+      type: object
+      properties:
+        direction:
+          type: string
+          enum: [UP, DOWN]
+      required:
+        - direction
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+
+security:
+  - bearerAuth: []

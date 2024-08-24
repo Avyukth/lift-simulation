@@ -1,0 +1,73 @@
+lift-simulation/
+│
+├── cmd/
+│   └── api/
+│       └── main.go
+│
+├── internal/
+│   ├── domain/
+│   │   ├── lift.go
+│   │   ├── floor.go
+│   │   └── system.go
+│   │
+│   ├── application/
+│   │   ├── services/
+│   │   │   ├── lift_service.go
+│   │   │   ├── floor_service.go
+│   │   │   └── system_service.go
+│   │   │
+│   │   └── ports/
+│   │       ├── repositories.go
+│   │       └── eventbus.go
+│   │
+│   ├── infrastructure/
+│   │   ├── persistence/
+│   │   │   ├── memory/
+│   │   │   │   └── repository.go
+│   │   │   └── postgres/
+│   │   │       └── repository.go
+│   │   │
+│   │   ├── eventbus/
+│   │   │   └── redis_pubsub.go
+│   │   │
+│   │   └── fiber/
+│   │       ├── handlers/
+│   │       │   ├── lift_handler.go
+│   │       │   ├── floor_handler.go
+│   │       │   └── system_handler.go
+│   │       │
+│   │       ├── middleware/
+│   │       │   └── auth.go
+│   │       │
+│   │       └── routes.go
+│   │
+│   └── config/
+│       └── config.go
+│
+├── pkg/
+│   ├── logger/
+│   │   └── logger.go
+│   │
+│   └── errors/
+│       └── errors.go
+│
+├── tests/
+│   ├── unit/
+│   │   └── domain/
+│   │       ├── lift_test.go
+│   │       ├── floor_test.go
+│   │       └── system_test.go
+│   │
+│   └── integration/
+│       └── api_test.go
+│
+├── docs/
+│   └── swagger.yaml
+│
+├── deployments/
+│   ├── Dockerfile
+│   └── docker-compose.yml
+│
+├── go.mod
+├── go.sum
+└── README.md
