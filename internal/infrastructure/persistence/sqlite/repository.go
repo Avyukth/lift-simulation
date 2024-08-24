@@ -113,35 +113,35 @@ func (r *Repository) ListLifts(ctx context.Context) ([]*domain.Lift, error) {
 }
 
 func (r *Repository) SaveLift(ctx context.Context, lift *domain.Lift) error {
+	// r.log.Info(ctx, "Saving lift", "lift_id", lift.ID())
+
 	stmt, err := r.db.PrepareContext(ctx, `
 		INSERT OR REPLACE INTO lifts (id, current_floor, status, capacity)
 		VALUES (?, ?, ?, ?)
 	`)
 	if err != nil {
+		r.log.Error(ctx, "Failed to prepare statement", "error", err)
 		return fmt.Errorf("failed to prepare statement: %w", err)
 	}
 	defer stmt.Close()
 
-	var id string
-	var currentFloor int
-	var status domain.LiftStatus
-	var capacity int
+	r.log.Debug(ctx, "Executing SQL",
+		"lift_id", lift.ID(),
+		"current_floor", lift.CurrentFloor(),
+		"status", lift.Status(),
+		"capacity", lift.Capacity())
 
-	err = stmt.QueryRow(
+	_, err = stmt.ExecContext(ctx,
 		lift.ID(),
 		lift.CurrentFloor(),
 		lift.Status(),
-		lift.Capacity(),
-	).Scan(&id, &currentFloor, &status, &capacity)
-
+		lift.Capacity())
 	if err != nil {
+		r.log.Error(ctx, "Failed to save lift", "error", err)
 		return fmt.Errorf("failed to save lift: %w", err)
 	}
 
-	lift.SetCurrentFloor(currentFloor)
-	lift.SetStatus(status)
-	lift.SetCapacity(capacity)
-
+	// r.log.Info(ctx, "Lift saved successfully", "lift_id", lift.ID())
 	return nil
 }
 
@@ -159,7 +159,6 @@ func (r *Repository) DeleteLift(ctx context.Context, id string) error {
 }
 
 // Floor Repository Methods
-
 func (r *Repository) GetFloor(ctx context.Context, floorNum int) (*domain.Floor, error) {
 	query := `SELECT floor_number, up_button_active, down_button_active FROM floors WHERE floor_number = ?`
 	var floor domain.Floor
@@ -205,7 +204,7 @@ func (r *Repository) ListFloors(ctx context.Context) ([]*domain.Floor, error) {
 }
 
 func (r *Repository) SaveFloor(ctx context.Context, floor *domain.Floor) error {
-	r.log.Info(ctx, "Saving floor", "floor_number", floor.Number())
+	// r.log.Info(ctx, "Saving floor", "floor_number", floor.Number())
 
 	stmt, err := r.db.PrepareContext(ctx, `
 		INSERT OR REPLACE INTO floors (floor_number, up_button_active, down_button_active)
@@ -231,7 +230,7 @@ func (r *Repository) SaveFloor(ctx context.Context, floor *domain.Floor) error {
 		return fmt.Errorf("failed to save floor: %w", err)
 	}
 
-	r.log.Info(ctx, "Floor saved successfully", "floor_number", floor.Number())
+	// r.log.Info(ctx, "Floor saved successfully", "floor_number", floor.Number())
 	return nil
 }
 
@@ -242,17 +241,31 @@ func (r *Repository) UpdateFloor(ctx context.Context, floor *domain.Floor) error
 // System Repository Methods
 
 func (r *Repository) GetSystem(ctx context.Context) (*domain.System, error) {
+	r.log.Info(ctx, "Getting system configuration")
+
 	query := `SELECT total_floors, total_lifts FROM system WHERE id = 1`
-	var system domain.System
-	err := r.db.QueryRowContext(ctx, query).Scan(system.GetTotalFloors(), system.TotalLifts())
+	var totalFloors, totalLifts int
+	err := r.db.QueryRowContext(ctx, query).Scan(&totalFloors, &totalLifts)
 	if err == sql.ErrNoRows {
+		r.log.Error(ctx, "System configuration not found")
 		return nil, fmt.Errorf("system configuration not found")
 	}
 	if err != nil {
+		r.log.Error(ctx, "Failed to get system configuration", "error", err)
 		return nil, fmt.Errorf("failed to get system configuration: %w", err)
 	}
-	return &system, nil
+
+	system, err := domain.NewSystem(totalFloors, totalLifts)
+	if err != nil {
+		r.log.Error(ctx, "Failed to create new system from configuration", "error", err)
+		return nil, fmt.Errorf("Failed to create new system from configuration: %w", err)
+	}
+	r.log.Info(ctx, "Successfully retrieved system configuration", 
+		"total_floors", system.TotalFloors(), 
+		"total_lifts", system.TotalLifts())
+	return system, nil
 }
+
 
 func (r *Repository) SaveSystem(ctx context.Context, system *domain.System) error {
 	query := `

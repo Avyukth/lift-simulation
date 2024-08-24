@@ -51,7 +51,7 @@ func (s *SystemService) ConfigureSystem(ctx context.Context, floors, lifts int) 
 
 	// Initialize floors
 	for i := 1; i <= floors; i++ {
-		s.log.Debug(ctx, "Creating floor", "floor_number", i)
+		// s.log.Debug(ctx, "Creating floor", "floor_number", i)
 		floor := domain.NewFloor(i)
 		if err := s.repo.SaveFloor(ctx, floor); err != nil {
 			s.log.Error(ctx, "Failed to save floor", "floor_number", i, "error", err)
@@ -61,7 +61,7 @@ func (s *SystemService) ConfigureSystem(ctx context.Context, floors, lifts int) 
 
 	// Initialize lifts
 	for i := 1; i <= lifts; i++ {
-		s.log.Debug(ctx, "Creating lift", "lift_number", i)
+		// s.log.Debug(ctx, "Creating lift", "lift_number", i)
 		lift := domain.NewLift(fmt.Sprintf("L%d", i))
 		if err := s.repo.SaveLift(ctx, lift); err != nil {
 			s.log.Debug(ctx, "Creating lift", "lift_number", i)
@@ -82,10 +82,17 @@ func (s *SystemService) ConfigureSystem(ctx context.Context, floors, lifts int) 
 
 // GetSystemConfiguration retrieves the current system configuration
 func (s *SystemService) GetSystemConfiguration(ctx context.Context) (*domain.System, error) {
+	s.log.Info(ctx, "Getting system configuration")
+
 	system, err := s.repo.GetSystem(ctx)
 	if err != nil {
+		s.log.Error(ctx, "Failed to get system configuration", "error", err)
 		return nil, fmt.Errorf("failed to get system configuration: %w", err)
 	}
+
+	s.log.Info(ctx, "Retrieved system configuration",
+		"total_floors", system.TotalFloors(),
+		"total_lifts", system.TotalLifts())
 	return system, nil
 }
 

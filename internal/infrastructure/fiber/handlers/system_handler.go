@@ -45,14 +45,19 @@ func (h *SystemHandler) ConfigureSystem(c *fiber.Ctx) error {
 
 // GetSystemConfiguration handles GET requests to retrieve the current system configuration
 func (h *SystemHandler) GetSystemConfiguration(c *fiber.Ctx) error {
-	config, err := h.systemService.GetSystemConfiguration(c.Context())
+	ctx := c.Context()
+
+	system, err := h.systemService.GetSystemConfiguration(ctx)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to retrieve system configuration",
+			"error": "Failed to get system configuration",
 		})
 	}
 
-	return c.JSON(config)
+	return c.JSON(fiber.Map{
+		"total_floors": system.TotalFloors(),
+		"total_lifts":  system.TotalLifts(),
+	})
 }
 
 // GetSystemStatus handles GET requests to retrieve the overall system status

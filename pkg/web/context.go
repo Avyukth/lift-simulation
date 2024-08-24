@@ -2,12 +2,18 @@ package web
 
 import (
 	"context"
+	"io"
 	"time"
+
+	"github.com/Avyukth/lift-simulation/pkg/logger"
 )
 
 type ctxKey int
 
-const key ctxKey = 1
+const (
+	key ctxKey = iota
+	loggerKey
+)
 
 // Values represent state for each request.
 type Values struct {
@@ -60,4 +66,18 @@ func setStatusCode(ctx context.Context, statusCode int) {
 
 func setValues(ctx context.Context, v *Values) context.Context {
 	return context.WithValue(ctx, key, v)
+}
+
+
+func SetLogger(ctx context.Context, log *logger.Logger) context.Context {
+	return context.WithValue(ctx, loggerKey, log)
+}
+
+// GetLogger retrieves the logger from the context.
+func GetLogger(ctx context.Context) *logger.Logger {
+	if log, ok := ctx.Value(loggerKey).(*logger.Logger); ok {
+		return log
+	}
+	// Return a no-op logger if not found
+	return logger.New(io.Discard, logger.LevelInfo, "NO-OP", nil)
 }
