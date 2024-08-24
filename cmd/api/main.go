@@ -52,7 +52,8 @@ func main() {
 
 func run(ctx context.Context, log *logger.Logger, fiberLog *logger.FiberLogger) error {
 	// -------------------------------------------------------------------------
-	GOMAXPROCS := runtime.NumCPU()
+	// maxProcs := 4
+	// runtime.GOMAXPROCS(maxProcs)
 
 	log.Info(ctx, "startup", "GOMAXPROCS", runtime.GOMAXPROCS(0))
 
@@ -60,6 +61,7 @@ func run(ctx context.Context, log *logger.Logger, fiberLog *logger.FiberLogger) 
 	// Configuration
 
 	cfg, err := config.LoadConfig(build)
+	log.Info(ctx, "startup", "status", cfg.Redis)
 	if err != nil {
 		return fmt.Errorf("loading config: %w", err)
 	}

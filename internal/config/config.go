@@ -24,14 +24,14 @@ type Config struct {
 		Issuer     string `conf:"default:lift simulation project"`
 	}
 	DB struct {
-		Path          string `conf:"default:./lift_simulation.db"`
-		MaxOpenConns  int    `conf:"default:10"`
-		MaxIdleConns  int    `conf:"default:5"`
+		Path          string        `conf:"default:./db/lift_simulation.sqlite"`
+		MaxOpenConns  int           `conf:"default:10"`
+		MaxIdleConns  int           `conf:"default:5"`
 		MaxLifetime   time.Duration `conf:"default:1h"`
 	}
 	Redis struct {
 		URL      string        `conf:"default:redis://localhost:6379,mask"`
-		Password string        `conf:"default:,mask"`
+		Password string        `conf:"default:redispassword,mask"`
 		DB       int           `conf:"default:0"`
 		PoolSize int           `conf:"default:10"`
 	}
