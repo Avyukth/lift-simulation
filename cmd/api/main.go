@@ -22,6 +22,8 @@ import (
 	"github.com/Avyukth/lift-simulation/internal/infrastructure/persistence/sqlite"
 	ws "github.com/Avyukth/lift-simulation/internal/infrastructure/fiber/websockets"
 	"github.com/Avyukth/lift-simulation/pkg/logger"
+	"github.com/Avyukth/lift-simulation/pkg/web"
+
 )
 
 var build = "develop"
@@ -36,7 +38,7 @@ func main() {
 	}
 
 	traceIDFn := func(ctx context.Context) string {
-		return "00000000-0000-0000-0000-000000000000"
+		return web.GetTraceID(ctx)
 	}
 
 	log := logger.NewWithEvents(os.Stdout, logger.LevelInfo, "LIFT-SIMULATION", traceIDFn, events)
