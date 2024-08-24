@@ -23,9 +23,6 @@ import (
 	"github.com/Avyukth/lift-simulation/internal/infrastructure/persistence/sqlite"
 	"github.com/Avyukth/lift-simulation/pkg/logger"
 	"github.com/Avyukth/lift-simulation/pkg/web"
-
-	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/getkin/kin-openapi/openapi3filter"
 )
 
 var build = "develop"
@@ -77,17 +74,16 @@ func run(ctx context.Context, log *logger.Logger, fiberLog *logger.FiberLogger) 
 	expvar.NewString("build").Set(build)
 
 	// Load and parse the OpenAPI specification
-	loader := openapi3.NewLoader()
-	doc, err := loader.LoadFromFile("./docs/swagger.json")
-	if err != nil {
-		return fmt.Errorf("error loading OpenAPI spec: %w", err)
-	}
+	// loader := openapi3.NewLoader()
+	// doc, err := loader.LoadFromFile("./docs/swagger.json")
+	// if err != nil {
+	// 	return fmt.Errorf("error loading OpenAPI spec: %w", err)
+	// }
 
-	// Validate the OpenAPI document
-	if err := doc.Validate(ctx); err != nil {
-		return fmt.Errorf("error validating OpenAPI spec: %w", err)
-	}
-
+	// // Validate the OpenAPI document
+	// if err := doc.Validate(ctx); err != nil {
+	// 	return fmt.Errorf("error validating OpenAPI spec: %w", err)
+	// }
 
 	// -------------------------------------------------------------------------
 	// Database Support
@@ -159,11 +155,10 @@ func run(ctx context.Context, log *logger.Logger, fiberLog *logger.FiberLogger) 
 	// }))
 
 	routes.SetupRoutes(app, liftHandler, floorHandler, systemHandler, hub, fiberLog)
-    // Add a test route
-    app.Get("/test", func(c *fiber.Ctx) error {
-        return c.SendString("API is working")
-    })
-
+	// Add a test route
+	app.Get("/test", func(c *fiber.Ctx) error {
+		return c.SendString("API is working")
+	})
 
 	// -------------------------------------------------------------------------
 	// Start API Service
