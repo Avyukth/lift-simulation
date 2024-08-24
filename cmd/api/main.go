@@ -20,6 +20,7 @@ import (
 	"github.com/Avyukth/lift-simulation/internal/infrastructure/fiber/handlers"
 	"github.com/Avyukth/lift-simulation/internal/infrastructure/fiber/routes"
 	"github.com/Avyukth/lift-simulation/internal/infrastructure/persistence/sqlite"
+	ws "github.com/Avyukth/lift-simulation/internal/infrastructure/fiber/websockets"
 	"github.com/Avyukth/lift-simulation/pkg/logger"
 )
 
@@ -94,15 +95,21 @@ func run(ctx context.Context, log *logger.Logger, fiberLog *logger.FiberLogger) 
 	// -------------------------------------------------------------------------
 	// Initialize WebSocket hub
 
-	hub := handlers.NewWebSocketHub()
+	hub := ws.NewWebSocketHub()
 	go hub.Run()
 
 	// -------------------------------------------------------------------------
 	// Initialize Services
 
-	liftService := services.NewLiftService(repo, eventBus)
+	liftService := services.NewLiftService(repo, eventBus, hub)
 	floorService := services.NewFloorService(repo, eventBus, liftService)
 	systemService := services.NewSystemService(repo, eventBus)
+
+	liftHandler := handlers.NewLiftHandler(liftService)
+	floorHandler := handlers.NewFloorHandler(floorService)
+
+	systemHandler := handlers.NewSystemHandler(systemService)
+
 
 	// -------------------------------------------------------------------------
 	// Start Debug Service
@@ -129,7 +136,7 @@ func run(ctx context.Context, log *logger.Logger, fiberLog *logger.FiberLogger) 
 
 	app.Use(recover.New())
 
-	routes.SetupRoutes(app, liftService, floorService, systemService, hub, fiberLog)
+	routes.SetupRoutes(app, liftHandler, floorHandler, systemHandler, hub, fiberLog)
 	app.Get("/swagger/*", swagger.HandlerDefault)
 
 	// -------------------------------------------------------------------------

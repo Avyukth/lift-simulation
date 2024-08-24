@@ -96,26 +96,26 @@ func (h *SystemHandler) GetSystemMetrics(c *fiber.Ctx) error {
 
 // SimulateTraffic handles POST requests to simulate lift traffic in the system
 func (h *SystemHandler) SimulateTraffic(c *fiber.Ctx) error {
-	var simulationParams struct {
-		Duration int `json:"duration"` // Duration in seconds
-		Intensity string `json:"intensity"` // e.g., "low", "medium", "high"
+	var request struct {
+		Duration  int    `json:"duration"`
+		Intensity string `json:"intensity"`
 	}
 
-	if err := c.BodyParser(&simulationParams); err != nil {
+	if err := c.BodyParser(&request); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid request body",
 		})
 	}
 
-	err := h.systemService.SimulateTraffic(c.Context(), simulationParams.Duration, simulationParams.Intensity)
+	err := h.systemService.SimulateTraffic(c.Context(), request.Duration, request.Intensity)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to start traffic simulation",
+			"error": "Failed to simulate traffic",
 			"details": err.Error(),
 		})
 	}
 
-	return c.Status(fiber.StatusAccepted).JSON(fiber.Map{
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "Traffic simulation started",
 	})
 }

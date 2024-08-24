@@ -95,3 +95,20 @@ func (s *FloorService) ResetFloorButtons(ctx context.Context, floorNum int) erro
 
 	return nil
 }
+
+// GetActiveFloorCalls retrieves the numbers of floors with active calls
+func (s *FloorService) GetActiveFloorCalls(ctx context.Context) ([]int, error) {
+	floors, err := s.repo.ListFloors(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list floors: %w", err)
+	}
+
+	activeCalls := []int{}
+	for _, floor := range floors {
+		if floor.HasActiveCall() {
+			activeCalls = append(activeCalls, floor.Number())
+		}
+	}
+
+	return activeCalls, nil
+}

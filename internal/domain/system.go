@@ -117,3 +117,13 @@ func NewSystemResetEvent() Event {
 		Payload: nil,
 	}
 }
+
+
+
+func (s *System) GetTotalFloors() int {
+    return s.totalFloors
+}
+
+func (s *System) GetTotalLifts() int {
+    return s.totalLifts
+}

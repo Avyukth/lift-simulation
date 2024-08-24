@@ -167,11 +167,11 @@ func (s *SystemService) GetSystemMetrics(ctx context.Context) (map[string]interf
 	return metrics, nil
 }
 
-// SimulateTraffic simulates traffic in the system based on the given intensity
-func (s *SystemService) SimulateTraffic(ctx context.Context, intensity string) error {
+// SimulateTraffic simulates traffic in the system based on the given intensity and duration
+func (s *SystemService) SimulateTraffic(ctx context.Context, duration int, intensity string) error {
 	switch intensity {
 	case "low", "medium", "high":
-		// Simulate traffic based on intensity
+		// Simulate traffic based on intensity and duration
 		return nil
 	default:
 		return fmt.Errorf("invalid traffic intensity: %s", intensity)

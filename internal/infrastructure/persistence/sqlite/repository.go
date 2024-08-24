@@ -230,7 +230,7 @@ func (r *Repository) UpdateFloor(ctx context.Context, floor *domain.Floor) error
 func (r *Repository) GetSystem(ctx context.Context) (*domain.System, error) {
 	query := `SELECT total_floors, total_lifts FROM system WHERE id = 1`
 	var system domain.System
-	err := r.db.QueryRowContext(ctx, query).Scan(&system.TotalFloors, &system.TotalLifts)
+	err := r.db.QueryRowContext(ctx, query).Scan(system.GetTotalFloors(), system.TotalLifts())
 	if err == sql.ErrNoRows {
 		return nil, fmt.Errorf("system configuration not found")
 	}
