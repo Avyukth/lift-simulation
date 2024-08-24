@@ -106,7 +106,7 @@ func run(ctx context.Context, log *logger.Logger, fiberLog *logger.FiberLogger) 
 
 	liftService := services.NewLiftService(repo, eventBus, hub, log)
 	floorService := services.NewFloorService(repo, eventBus, liftService)
-	systemService := services.NewSystemService(repo, eventBus)
+	systemService := services.NewSystemService(repo, eventBus, log)
 
 	liftHandler := handlers.NewLiftHandler(liftService)
 	floorHandler := handlers.NewFloorHandler(floorService)
