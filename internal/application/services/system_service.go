@@ -144,11 +144,76 @@ func (s *SystemService) ResetSystem(ctx context.Context) error {
 	return nil
 }
 
+// GetSystemMetrics retrieves various metrics about the system
+func (s *SystemService) GetSystemMetrics(ctx context.Context) (map[string]interface{}, error) {
+	system, err := s.repo.GetSystem(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get system: %w", err)
+	}
+
+	lifts, err := s.repo.GetAllLifts(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get lifts: %w", err)
+	}
+
+	metrics := map[string]interface{}{
+		"totalFloors":     system.TotalFloors(),
+		"totalLifts":      system.TotalLifts(),
+		"availableLifts":  countAvailableLifts(lifts),
+		"occupiedLifts":   countOccupiedLifts(lifts),
+		"outOfServiceLifts": countOutOfServiceLifts(lifts),
+	}
+
+	return metrics, nil
+}
+
+// SimulateTraffic simulates traffic in the system based on the given intensity
+func (s *SystemService) SimulateTraffic(ctx context.Context, intensity string) error {
+	switch intensity {
+	case "low", "medium", "high":
+		// Simulate traffic based on intensity
+		return nil
+	default:
+		return fmt.Errorf("invalid traffic intensity: %s", intensity)
+	}
+}
+
 // Helper function to count active floor calls
 func countActiveFloorCalls(floors []*domain.Floor) int {
 	count := 0
 	for _, floor := range floors {
 		if floor.HasActiveCall() {
+			count++
+		}
+	}
+	return count
+}
+
+// Helper functions for GetSystemMetrics
+func countAvailableLifts(lifts []*domain.Lift) int {
+	count := 0
+	for _, lift := range lifts {
+		if lift.Status() == domain.Available {
+			count++
+		}
+	}
+	return count
+}
+
+func countOccupiedLifts(lifts []*domain.Lift) int {
+	count := 0
+	for _, lift := range lifts {
+		if lift.Status() == domain.Occupied {
+			count++
+		}
+	}
+	return count
+}
+
+func countOutOfServiceLifts(lifts []*domain.Lift) int {
+	count := 0
+	for _, lift := range lifts {
+		if lift.Status() == domain.OutOfService {
 			count++
 		}
 	}

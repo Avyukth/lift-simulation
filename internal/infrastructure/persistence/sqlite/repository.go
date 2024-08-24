@@ -5,9 +5,9 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/Avyukth/lift-simulation/internal/application/ports"
-	"github.com/Avyukth/lift-simulation/internal/domain"
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/Avyukth/lift-simulation/internal/domain"
+	"github.com/Avyukth/lift-simulation/internal/application/ports"
 )
 
 // Repository implements the Repository interface using SQLite
@@ -245,7 +245,9 @@ func (r *Repository) SaveSystem(ctx context.Context, system *domain.System) erro
 		INSERT OR REPLACE INTO system (id, total_floors, total_lifts)
 		VALUES (1, ?, ?)
 	`
-	_, err := r.db.ExecContext(ctx, query, system.TotalFloors, system.TotalLifts)
+	totalFloors := system.TotalFloors()
+	totalLifts := system.TotalLifts()
+	_, err := r.db.ExecContext(ctx, query, totalFloors, totalLifts)
 	if err != nil {
 		return fmt.Errorf("failed to save system configuration: %w", err)
 	}
