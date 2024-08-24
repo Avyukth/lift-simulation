@@ -12,6 +12,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	// "github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 
 	"github.com/Avyukth/lift-simulation/internal/application/services"
@@ -72,18 +73,6 @@ func run(ctx context.Context, log *logger.Logger, fiberLog *logger.FiberLogger) 
 	defer log.Info(ctx, "shutdown complete")
 
 	expvar.NewString("build").Set(build)
-
-	// Load and parse the OpenAPI specification
-	// loader := openapi3.NewLoader()
-	// doc, err := loader.LoadFromFile("./docs/swagger.json")
-	// if err != nil {
-	// 	return fmt.Errorf("error loading OpenAPI spec: %w", err)
-	// }
-
-	// // Validate the OpenAPI document
-	// if err := doc.Validate(ctx); err != nil {
-	// 	return fmt.Errorf("error validating OpenAPI spec: %w", err)
-	// }
 
 	// -------------------------------------------------------------------------
 	// Database Support
@@ -149,10 +138,10 @@ func run(ctx context.Context, log *logger.Logger, fiberLog *logger.FiberLogger) 
 	})
 
 	app.Use(recover.New())
-	// 	app.Use(cors.New(cors.Config{
-	// 	AllowOrigins: "http://localhost:6000", // Replace with your web app's origin
-	// 	AllowMethods: "GET, POST, PUT, DELETE, OPTIONS",
-	// }))
+	app.Use(cors.New(cors.Config{
+		AllowOrigins: "http://localhost:6000", // Replace with your web app's origin
+		AllowMethods: "GET, POST, PUT, DELETE, OPTIONS",
+	}))
 
 	routes.SetupRoutes(app, liftHandler, floorHandler, systemHandler, hub, fiberLog)
 	// Add a test route
