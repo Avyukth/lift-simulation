@@ -67,3 +67,27 @@ func (f *Floor) ResetButtons() {
 	f.upButtonActive = false
 	f.downButtonActive = false
 }
+
+func NewFloorButtonsResetEvent(floorNum int) Event {
+    return Event{
+        Type: FloorButtonsReset,
+        Payload: struct {
+            FloorNumber int
+        }{
+            FloorNumber: floorNum,
+        },
+    }
+}
+
+func NewLiftAssignedEvent(liftID string, floorNum int) Event {
+    return Event{
+        Type: LiftAssigned,
+        Payload: struct {
+            LiftID      string
+            FloorNumber int
+        }{
+            LiftID:      liftID,
+            FloorNumber: floorNum,
+        },
+    }
+}

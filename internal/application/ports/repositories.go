@@ -25,11 +25,15 @@ type FloorRepository interface {
 
 // SystemRepository defines the interface for system-wide persistence operations
 type SystemRepository interface {
-	GetSystem(ctx context.Context) (*domain.System, error)
-	SaveSystem(ctx context.Context, system *domain.System) error
-	UpdateSystem(ctx context.Context, system *domain.System) error
-	GetAllLifts(ctx context.Context) ([]*domain.Lift, error)
-	GetAllFloors(ctx context.Context) ([]*domain.Floor, error)
+    GetSystem(ctx context.Context) (*domain.System, error)
+    SaveSystem(ctx context.Context, system *domain.System) error
+    UpdateSystem(ctx context.Context, system *domain.System) error
+    GetAllLifts(ctx context.Context) ([]*domain.Lift, error)
+    GetAllFloors(ctx context.Context) ([]*domain.Floor, error)
+    SaveFloor(ctx context.Context, floor *domain.Floor) error
+    SaveLift(ctx context.Context, lift *domain.Lift) error
+    GetLift(ctx context.Context, id string) (*domain.Lift, error)
+    GetFloor(ctx context.Context, floorNum int) (*domain.Floor, error)
 }
 
 // Repository combines all repository interfaces

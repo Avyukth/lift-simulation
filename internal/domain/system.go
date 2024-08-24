@@ -58,6 +58,8 @@ const (
 	LiftCalled         EventType = "LIFT_CALLED"
 	SystemConfigured   EventType = "SYSTEM_CONFIGURED"
 	SystemReset        EventType = "SYSTEM_RESET"
+	FloorButtonsReset  EventType = "FLOOR_BUTTONS_RESET"
+	LiftAssigned       EventType = "LIFT_ASSIGNED"
 )
 
 // Event represents a domain event in the lift system

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"reflect"
 	"sync"
 
 	"github.com/Avyukth/lift-simulation/internal/application/ports"
@@ -73,7 +74,7 @@ func (r *RedisPubSub) Unsubscribe(eventType domain.EventType, handler ports.Even
 
 	handlers := r.subscribers[eventType]
 	for i, h := range handlers {
-		if h == handler {
+		if reflect.ValueOf(h).Pointer() == reflect.ValueOf(handler).Pointer() {
 			r.subscribers[eventType] = append(handlers[:i], handlers[i+1:]...)
 			break
 		}

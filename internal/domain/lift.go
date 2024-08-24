@@ -131,3 +131,34 @@ func abs(x int) int {
 	}
 	return x
 }
+
+func (l *Lift) AssignToFloor(floor int) error {
+    l.targetFloor = floor
+    l.status = Occupied
+    return nil
+}
+
+func (l *Lift) Reset() {
+    l.currentFloor = 1
+    l.targetFloor = 1
+    l.direction = Idle
+    l.status = Available
+    l.passengers = 0
+}
+
+func (l *Lift) Direction() Direction {
+    return l.direction
+}
+
+// Add these setter methods
+func (l *Lift) SetCurrentFloor(floor int) {
+    l.currentFloor = floor
+}
+
+func (l *Lift) SetStatus(status LiftStatus) {
+    l.status = status
+}
+
+func (l *Lift) SetCapacity(capacity int) {
+    l.capacity = capacity
+}

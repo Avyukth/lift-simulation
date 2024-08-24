@@ -7,14 +7,13 @@ import (
 	"github.com/Avyukth/lift-simulation/internal/application/ports"
 	"github.com/Avyukth/lift-simulation/internal/domain"
 	ws "github.com/Avyukth/lift-simulation/internal/infrastructure/fiber/websockets"
-
 )
 
 // LiftService handles the business logic for lift operations
 type LiftService struct {
 	repo     ports.LiftRepository
 	eventBus ports.EventBus
-	wsHub *ws.WebSocketHub
+	wsHub    *ws.WebSocketHub
 }
 
 // NewLiftService creates a new instance of LiftService
@@ -23,7 +22,6 @@ func NewLiftService(repo ports.LiftRepository, eventBus ports.EventBus, wsHub *w
 		repo:     repo,
 		eventBus: eventBus,
 		wsHub:    wsHub,
-
 	}
 }
 
@@ -44,7 +42,7 @@ func (s *LiftService) MoveLift(ctx context.Context, liftID string, targetFloor i
 
 	// Publish an event about the lift movement
 	event := domain.NewLiftMovedEvent(lift.ID(), lift.CurrentFloor())
-    s.wsHub.BroadcastUpdate(event)
+	s.wsHub.BroadcastUpdate(event)
 	return s.eventBus.Publish(ctx, event)
 }
 
@@ -111,4 +109,19 @@ func abs(x int) int {
 		return -x
 	}
 	return x
+}
+
+// SetLiftStatus sets the status of a lift
+func (s *LiftService) SetLiftStatus(ctx context.Context, liftID string, status domain.LiftStatus) error {
+	lift, err := s.repo.GetLift(ctx, liftID)
+	if err != nil {
+		return err
+	}
+
+	lift.SetStatus(status)
+	if err := s.repo.UpdateLift(ctx, lift); err != nil {
+		return err
+	}
+
+	return nil
 }

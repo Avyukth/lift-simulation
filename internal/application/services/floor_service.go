@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/Avyukth/lift-simulation/internal/domain"
 	"github.com/Avyukth/lift-simulation/internal/application/ports"
+	"github.com/Avyukth/lift-simulation/internal/domain"
 )
 
 // FloorService handles the business logic for floor operations
