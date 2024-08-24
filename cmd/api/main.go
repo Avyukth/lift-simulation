@@ -11,19 +11,21 @@ import (
 	"syscall"
 
 	"github.com/gofiber/fiber/v2"
+	// "github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/recover"
-	"github.com/gofiber/swagger"
 
 	"github.com/Avyukth/lift-simulation/internal/application/services"
 	"github.com/Avyukth/lift-simulation/internal/config"
 	"github.com/Avyukth/lift-simulation/internal/infrastructure/eventbus"
 	"github.com/Avyukth/lift-simulation/internal/infrastructure/fiber/handlers"
 	"github.com/Avyukth/lift-simulation/internal/infrastructure/fiber/routes"
-	"github.com/Avyukth/lift-simulation/internal/infrastructure/persistence/sqlite"
 	ws "github.com/Avyukth/lift-simulation/internal/infrastructure/fiber/websockets"
+	"github.com/Avyukth/lift-simulation/internal/infrastructure/persistence/sqlite"
 	"github.com/Avyukth/lift-simulation/pkg/logger"
 	"github.com/Avyukth/lift-simulation/pkg/web"
 
+	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/getkin/kin-openapi/openapi3filter"
 )
 
 var build = "develop"
@@ -61,7 +63,7 @@ func run(ctx context.Context, log *logger.Logger, fiberLog *logger.FiberLogger) 
 	// Configuration
 
 	cfg, err := config.LoadConfig(build)
-	log.Info(ctx, "startup", "status", cfg.Redis)
+	// log.Info(ctx, "startup", "redis", cfg.Redis)
 	if err != nil {
 		return fmt.Errorf("loading config: %w", err)
 	}
@@ -73,6 +75,19 @@ func run(ctx context.Context, log *logger.Logger, fiberLog *logger.FiberLogger) 
 	defer log.Info(ctx, "shutdown complete")
 
 	expvar.NewString("build").Set(build)
+
+	// Load and parse the OpenAPI specification
+	loader := openapi3.NewLoader()
+	doc, err := loader.LoadFromFile("./docs/swagger.json")
+	if err != nil {
+		return fmt.Errorf("error loading OpenAPI spec: %w", err)
+	}
+
+	// Validate the OpenAPI document
+	if err := doc.Validate(ctx); err != nil {
+		return fmt.Errorf("error validating OpenAPI spec: %w", err)
+	}
+
 
 	// -------------------------------------------------------------------------
 	// Database Support
@@ -114,7 +129,6 @@ func run(ctx context.Context, log *logger.Logger, fiberLog *logger.FiberLogger) 
 
 	systemHandler := handlers.NewSystemHandler(systemService)
 
-
 	// -------------------------------------------------------------------------
 	// Start Debug Service
 
@@ -139,9 +153,17 @@ func run(ctx context.Context, log *logger.Logger, fiberLog *logger.FiberLogger) 
 	})
 
 	app.Use(recover.New())
+	// 	app.Use(cors.New(cors.Config{
+	// 	AllowOrigins: "http://localhost:6000", // Replace with your web app's origin
+	// 	AllowMethods: "GET, POST, PUT, DELETE, OPTIONS",
+	// }))
 
 	routes.SetupRoutes(app, liftHandler, floorHandler, systemHandler, hub, fiberLog)
-	app.Get("/swagger/*", swagger.HandlerDefault)
+    // Add a test route
+    app.Get("/test", func(c *fiber.Ctx) error {
+        return c.SendString("API is working")
+    })
+
 
 	// -------------------------------------------------------------------------
 	// Start API Service

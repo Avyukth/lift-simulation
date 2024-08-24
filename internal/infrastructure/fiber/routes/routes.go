@@ -25,14 +25,44 @@ func SetupRoutes(app *fiber.App, liftHandler *handlers.LiftHandler, floorHandler
 	// API version group
 	api := app.Group("/api/v1")
 
+	// @Summary Get system health
+	// @Description Check if the system is running
+	// @Tags health
+	// @Produce plain
+	// @Success 200 {string} string "OK"
+	// @Router /health [get]
 	// Public routes
 	api.Get("/health", func(c *fiber.Ctx) error {
 		return c.SendString("OK")
 	})
-
+	// Swagger documentation
+	// @title Lift Simulation API
+	// @version 1.0
+	// @description API for managing and interacting with a lift simulation system.
+	// @termsOfService http://example.com/terms
+	// @contact.name Lift Simulation Support
+	// @contact.email support@liftsimulation.com
+	// @license.name Apache 2.0
+	// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+	// @host localhost:4000
+	// @BasePath /api/v1
 	// System routes
 	system := api.Group("/system")
+	// @Summary Configure the system
+	// @Description Set up the lift simulation system
+	// @Tags system
+	// @Accept json
+	// @Produce json
+	// @Param configuration body object true "System configuration"
+	// @Success 200 {object} object
+	// @Router /system/configure [post]
 	system.Post("/configure", authMiddleware, systemHandler.ConfigureSystem)
+	// @Summary Get system configuration
+	// @Description Retrieve the current system configuration
+	// @Tags system
+	// @Produce json
+	// @Success 200 {object} object
+	// @Router /system/configuration [get]
 	system.Get("/configuration", systemHandler.GetSystemConfiguration)
 	system.Get("/status", systemHandler.GetSystemStatus)
 	system.Post("/reset", authMiddleware, systemHandler.ResetSystem)

@@ -15,8 +15,8 @@ type Config struct {
 		WriteTimeout    time.Duration `conf:"default:10s"`
 		IdleTimeout     time.Duration `conf:"default:120s"`
 		ShutdownTimeout time.Duration `conf:"default:20s"`
-		APIHost         string        `conf:"default:0.0.0.0:3000"`
-		DebugHost       string        `conf:"default:0.0.0.0:4000"`
+		APIHost         string        `conf:"default:0.0.0.0:4000"`
+		DebugHost       string        `conf:"default:0.0.0.0:5000"`
 	}
 	Auth struct {
 		KeysFolder string `conf:"default:zarf/keys/"`
@@ -24,16 +24,16 @@ type Config struct {
 		Issuer     string `conf:"default:lift simulation project"`
 	}
 	DB struct {
-		Path          string        `conf:"default:./db/lift_simulation.sqlite"`
-		MaxOpenConns  int           `conf:"default:10"`
-		MaxIdleConns  int           `conf:"default:5"`
-		MaxLifetime   time.Duration `conf:"default:1h"`
+		Path         string        `conf:"default:./db/lift_simulation.sqlite"`
+		MaxOpenConns int           `conf:"default:10"`
+		MaxIdleConns int           `conf:"default:5"`
+		MaxLifetime  time.Duration `conf:"default:1h"`
 	}
 	Redis struct {
-		URL      string        `conf:"default:redis://localhost:6379,mask"`
-		Password string        `conf:"default:redispassword,mask"`
-		DB       int           `conf:"default:0"`
-		PoolSize int           `conf:"default:10"`
+		URL      string `conf:"default:redis://:redispassword@localhost:6379,mask"`
+		Password string `conf:"default:redispassword,mask"`
+		DB       int    `conf:"default:0"`
+		PoolSize int    `conf:"default:10"`
 	}
 	Lift struct {
 		MaxFloors     int `conf:"default:50"`
