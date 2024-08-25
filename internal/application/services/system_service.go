@@ -144,6 +144,7 @@ func (s *SystemService) ResetSystem(ctx context.Context) error {
 
 	// Reset all lifts to ground floor (now floor 0)
 	lifts, err := s.repo.GetAllLifts(ctx)
+	s.log.Info(ctx, "Resetting system", "lifts", lifts)
 	if err != nil {
 		return fmt.Errorf("failed to get lifts: %w", err)
 	}

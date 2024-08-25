@@ -64,7 +64,7 @@ func (h *LiftHandler) MoveLift(c *fiber.Ctx) error {
 	err := h.liftService.MoveLift(c.Context(), liftID, request.TargetFloor)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to move lift",
+			"error": err.Error(),
 		})
 	}
 
@@ -110,6 +110,7 @@ func (h *LiftHandler) SetLiftStatus(c *fiber.Ctx) error {
 	}
 
 	if err := c.BodyParser(&request); err != nil {
+		fmt.Println("Failed to parse request body", err)
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid request body",
 		})

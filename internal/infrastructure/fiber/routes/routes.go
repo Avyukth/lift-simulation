@@ -55,18 +55,18 @@ func SetupRoutes(app *fiber.App, liftHandler *handlers.LiftHandler, floorHandler
 	// Lift routes
 	lifts := api.Group("/lifts")
 	lifts.Get("/", liftHandler.ListLifts)
+	// lifts.Post("/assign",  liftHandler.AssignLiftToFloor)
 	lifts.Get("/:id", liftHandler.GetLift)
 	lifts.Post("/:id/move", systemVerification.VerifyLiftMove(), liftHandler.MoveLift)
-	// lifts.Post("/assign",  liftHandler.AssignLiftToFloor)
 	lifts.Put("/:id/status", liftHandler.SetLiftStatus)
 
 	// Floor routes
 	floors := api.Group("/floors")
 	floors.Get("/", floorHandler.ListFloors)
+	floors.Get("/active-calls", floorHandler.GetActiveFloorCalls)
 	floors.Get("/:floorNum", floorHandler.GetFloorStatus)
 	// floors.Post("/:floorNum/call", floorHandler.CallLift)
 	floors.Post("/:floorNum/reset", floorHandler.ResetFloorButtons)
-	floors.Get("/active-calls", floorHandler.GetActiveFloorCalls)
 
 	// WebSocket route for real-time updates
 	app.Get("/ws", ws.WebSocketHandler)

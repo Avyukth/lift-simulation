@@ -40,7 +40,7 @@ func createTables(db *sql.DB) error {
 	queries := []string{
 		`CREATE TABLE IF NOT EXISTS lifts (
 			id TEXT PRIMARY KEY,
-			name TEXT,
+			name TEXT UNIQUE,
 			current_floor INTEGER,
 			status TEXT,
 			capacity INTEGER
