@@ -11,7 +11,8 @@ import (
 	"syscall"
 
 	"github.com/gofiber/fiber/v2"
-	// "github.com/gofiber/fiber/v2/middleware/cors"
+
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 
 	"github.com/Avyukth/lift-simulation/internal/application/services"
@@ -60,7 +61,6 @@ func run(ctx context.Context, log *logger.Logger, fiberLog *logger.FiberLogger) 
 	// Configuration
 
 	cfg, err := config.LoadConfig(build)
-	// log.Info(ctx, "startup", "redis", cfg.Redis)
 	if err != nil {
 		return fmt.Errorf("loading config: %w", err)
 	}
@@ -136,7 +136,8 @@ func run(ctx context.Context, log *logger.Logger, fiberLog *logger.FiberLogger) 
 	})
 
 	app.Use(recover.New())
-	// app.Use(cors.New(cors.Config{
+	app.Use(cors.New())
+	// cors.Config{
 	// 	AllowOrigins: "http://localhost:6000", // Replace with your web app's origin
 	// 	AllowMethods: "GET, POST, PUT, DELETE, OPTIONS",
 	// }))
@@ -173,9 +174,10 @@ func run(ctx context.Context, log *logger.Logger, fiberLog *logger.FiberLogger) 
 
 		ctx, cancel := context.WithTimeout(ctx, cfg.Web.ShutdownTimeout)
 		defer cancel()
-
 		if err := app.ShutdownWithContext(ctx); err != nil {
-			app.Shutdown()
+			if shutdownErr := app.Shutdown(); shutdownErr != nil {
+				return fmt.Errorf("could not stop server gracefully: %w (shutdown error: %v)", err, shutdownErr)
+			}
 			return fmt.Errorf("could not stop server gracefully: %w", err)
 		}
 	}
