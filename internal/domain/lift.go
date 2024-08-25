@@ -25,104 +25,94 @@ const (
 
 // Lift represents a lift in the system
 type Lift struct {
-	id           string
-	currentFloor int
-	targetFloor  int
-	direction    Direction
-	status       LiftStatus
-	capacity     int
-	passengers   int
-	lastMoveTime time.Time
+	ID           string     `json:"id"`
+	CurrentFloor int        `json:"current_floor"`
+	TargetFloor  int        `json:"target_floor"`
+	Direction    Direction  `json:"direction"`
+	Status       LiftStatus `json:"status"`
+	Capacity     int        `json:"capacity"`
+	Passengers   int        `json:"passengers"`
+	LastMoveTime time.Time  `json:"last_move_time"`
 }
 
 // NewLift creates a new Lift instance
 func NewLift(id string) *Lift {
 	return &Lift{
-		id:           id,
-		currentFloor: 1,
-		direction:    Idle,
-		status:       Available,
-		capacity:     10,
-		lastMoveTime: time.Now(),
+		ID:           id,
+		CurrentFloor: 1,
+		Direction:    Idle,
+		Status:       Available,
+		Capacity:     10,
+		LastMoveTime: time.Now(),
 	}
 }
 
-// ID returns the lift's identifier
-func (l *Lift) ID() string {
-	return l.id
+func (l *Lift) SetCurrentFloor(floor int) {
+	l.CurrentFloor = floor
 }
 
-// CurrentFloor returns the current floor of the lift
-func (l *Lift) CurrentFloor() int {
-	return l.currentFloor
-}
-
-// Status returns the current status of the lift
-func (l *Lift) Status() LiftStatus {
-	return l.status
-}
-
-// IsAvailable checks if the lift is available
 func (l *Lift) IsAvailable() bool {
-	return l.status == Available
+	return l.Status == Available
 }
 
-// MoveTo moves the lift to the specified floor
+func (l *Lift) SetStatus(status LiftStatus) {
+	l.Status = status
+}
+
+func (l *Lift) SetCapacity(capacity int) {
+	l.Capacity = capacity
+}
+
 func (l *Lift) MoveTo(floor int) error {
-	if floor == l.currentFloor {
+	if floor == l.CurrentFloor {
 		return errors.New("lift is already on the requested floor")
 	}
 
-	l.targetFloor = floor
-	if floor > l.currentFloor {
-		l.direction = Up
+	l.TargetFloor = floor
+	if floor > l.CurrentFloor {
+		l.Direction = Up
 	} else {
-		l.direction = Down
+		l.Direction = Down
 	}
-	l.status = Occupied
+	l.Status = Occupied
 
 	// Simulate movement time (2 seconds per floor)
-	time.Sleep(time.Duration(abs(floor-l.currentFloor)) * 2 * time.Second)
+	time.Sleep(time.Duration(abs(floor-l.CurrentFloor)) * 2 * time.Second)
 
-	l.currentFloor = floor
-	l.direction = Idle
-	l.status = Available
-	l.lastMoveTime = time.Now()
+	l.CurrentFloor = floor
+	l.Direction = Idle
+	l.Status = Available
+	l.LastMoveTime = time.Now()
 
 	return nil
 }
 
-// AddPassengers adds passengers to the lift
 func (l *Lift) AddPassengers(count int) error {
-	if l.passengers+count > l.capacity {
+	if l.Passengers+count > l.Capacity {
 		return errors.New("exceeds lift capacity")
 	}
-	l.passengers += count
+	l.Passengers += count
 	return nil
 }
 
-// RemovePassengers removes passengers from the lift
 func (l *Lift) RemovePassengers(count int) error {
-	if l.passengers-count < 0 {
+	if l.Passengers-count < 0 {
 		return errors.New("invalid passenger count")
 	}
-	l.passengers -= count
+	l.Passengers -= count
 	return nil
 }
 
-// SetOutOfService sets the lift's status to out of service
 func (l *Lift) SetOutOfService() {
-	l.status = OutOfService
+	l.Status = OutOfService
 }
 
-// SetAvailable sets the lift's status to available
 func (l *Lift) SetAvailable() {
-	l.status = Available
+	l.Status = Available
 }
 
-// LastMoveTime returns the time of the lift's last movement
-func (l *Lift) LastMoveTime() time.Time {
-	return l.lastMoveTime
+func (l *Lift) GetLastMoveTime() time.Time {
+	return l.LastMoveTime
 }
 
 func abs(x int) int {
@@ -133,36 +123,41 @@ func abs(x int) int {
 }
 
 func (l *Lift) AssignToFloor(floor int) error {
-    l.targetFloor = floor
-    l.status = Occupied
-    return nil
+	l.TargetFloor = floor
+	l.Status = Occupied
+	return nil
 }
 
 func (l *Lift) Reset() {
-    l.currentFloor = 1
-    l.targetFloor = 1
-    l.direction = Idle
-    l.status = Available
-    l.passengers = 0
+	l.CurrentFloor = 1
+	l.TargetFloor = 1
+	l.Direction = Idle
+	l.Status = Available
+	l.Passengers = 0
 }
 
-func (l *Lift) Direction() Direction {
-    return l.direction
+func StringToLiftStatus(status string) LiftStatus {
+	switch status {
+	case "Available":
+		return Available
+	case "Occupied":
+		return Occupied
+	case "OutOfService":
+		return OutOfService
+	default:
+		return Available // Default to Available if unknown status
+	}
 }
 
-// Add these setter methods
-func (l *Lift) SetCurrentFloor(floor int) {
-    l.currentFloor = floor
-}
-
-func (l *Lift) SetStatus(status LiftStatus) {
-    l.status = status
-}
-
-func (l *Lift) SetCapacity(capacity int) {
-    l.capacity = capacity
-}
-
-func (l *Lift) Capacity() int {
-    return l.capacity
+func LiftStatusToString(status LiftStatus) string {
+	switch status {
+	case Available:
+		return "Available"
+	case Occupied:
+		return "Occupied"
+	case OutOfService:
+		return "OutOfService"
+	default:
+		return "Unknown"
+	}
 }

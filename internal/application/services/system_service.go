@@ -17,7 +17,7 @@ type SystemService struct {
 }
 
 // NewSystemService creates a new instance of SystemService
-func NewSystemService(repo ports.SystemRepository, eventBus ports.EventBus,  log *logger.Logger) *SystemService {
+func NewSystemService(repo ports.SystemRepository, eventBus ports.EventBus, log *logger.Logger) *SystemService {
 	return &SystemService{
 		repo:     repo,
 		eventBus: eventBus,
@@ -40,7 +40,7 @@ func (s *SystemService) ConfigureSystem(ctx context.Context, floors, lifts int) 
 	s.log.Info(ctx, "Configuring system", "total_floors", floors, "total_lifts", lifts)
 
 	system, err := domain.NewSystem(floors, lifts)
-	if err != nil{
+	if err != nil {
 		return fmt.Errorf("failed to create system configuration: %w", err)
 	}
 
@@ -114,8 +114,8 @@ func (s *SystemService) GetSystemStatus(ctx context.Context) (*domain.SystemStat
 	}
 
 	status := &domain.SystemStatus{
-		TotalFloors:    system.TotalFloors(),
-		TotalLifts:     system.TotalLifts(),
+		TotalFloors:      system.TotalFloors(),
+		TotalLifts:       system.TotalLifts(),
 		OperationalLifts: len(lifts),
 		ActiveFloorCalls: countActiveFloorCalls(floors),
 	}
@@ -176,10 +176,10 @@ func (s *SystemService) GetSystemMetrics(ctx context.Context) (map[string]interf
 	}
 
 	metrics := map[string]interface{}{
-		"totalFloors":     system.TotalFloors(),
-		"totalLifts":      system.TotalLifts(),
-		"availableLifts":  countAvailableLifts(lifts),
-		"occupiedLifts":   countOccupiedLifts(lifts),
+		"totalFloors":       system.TotalFloors(),
+		"totalLifts":        system.TotalLifts(),
+		"availableLifts":    countAvailableLifts(lifts),
+		"occupiedLifts":     countOccupiedLifts(lifts),
 		"outOfServiceLifts": countOutOfServiceLifts(lifts),
 	}
 
@@ -212,7 +212,7 @@ func countActiveFloorCalls(floors []*domain.Floor) int {
 func countAvailableLifts(lifts []*domain.Lift) int {
 	count := 0
 	for _, lift := range lifts {
-		if lift.Status() == domain.Available {
+		if lift.Status == domain.Available {
 			count++
 		}
 	}
@@ -222,7 +222,7 @@ func countAvailableLifts(lifts []*domain.Lift) int {
 func countOccupiedLifts(lifts []*domain.Lift) int {
 	count := 0
 	for _, lift := range lifts {
-		if lift.Status() == domain.Occupied {
+		if lift.Status == domain.Occupied {
 			count++
 		}
 	}
@@ -232,7 +232,7 @@ func countOccupiedLifts(lifts []*domain.Lift) int {
 func countOutOfServiceLifts(lifts []*domain.Lift) int {
 	count := 0
 	for _, lift := range lifts {
-		if lift.Status() == domain.OutOfService {
+		if lift.Status == domain.OutOfService {
 			count++
 		}
 	}

@@ -76,9 +76,11 @@ func (r *Repository) GetLift(ctx context.Context, id string) (*domain.Lift, erro
 	var capacity int
 	err := r.db.QueryRowContext(ctx, query, id).Scan(&currentFloor, &status, &capacity)
 	if err == sql.ErrNoRows {
+		r.log.Error(ctx, "Failed to get lift", "error", err)
 		return nil, fmt.Errorf("lift not found: %s", id)
 	}
 	if err != nil {
+		r.log.Error(ctx, "Failed to get lift", "error", err)
 		return nil, fmt.Errorf("failed to get lift: %w", err)
 	}
 	lift.SetCurrentFloor(currentFloor)
@@ -88,27 +90,44 @@ func (r *Repository) GetLift(ctx context.Context, id string) (*domain.Lift, erro
 }
 
 func (r *Repository) ListLifts(ctx context.Context) ([]*domain.Lift, error) {
+	r.log.Info(ctx, "Listing all lifts")
+
 	query := `SELECT id, current_floor, status, capacity FROM lifts`
 	rows, err := r.db.QueryContext(ctx, query)
 	if err != nil {
+		r.log.Error(ctx, "Failed to query lifts", "error", err)
 		return nil, fmt.Errorf("failed to list lifts: %w", err)
 	}
 	defer rows.Close()
 
 	var lifts []*domain.Lift
 	for rows.Next() {
-		var lift domain.Lift
+		var id string
 		var currentFloor int
-		var status domain.LiftStatus
+		var statusStr string
 		var capacity int
-		if err := rows.Scan(&currentFloor, &status, &capacity); err != nil {
+
+		if err := rows.Scan(&id, &currentFloor, &statusStr, &capacity); err != nil {
+			r.log.Error(ctx, "Failed to scan lift row", "error", err)
 			return nil, fmt.Errorf("failed to scan lift: %w", err)
 		}
+
+		lift := domain.NewLift(id)
 		lift.SetCurrentFloor(currentFloor)
-		lift.SetStatus(status)
+		lift.SetStatus(domain.StringToLiftStatus(statusStr))
 		lift.SetCapacity(capacity)
-		lifts = append(lifts, &lift)
+
+		lifts = append(lifts, lift)
+
+		r.log.Info(ctx, "Scanned lift", "id", id, "current_floor", currentFloor, "status", statusStr, "capacity", capacity)
 	}
+
+	if err = rows.Err(); err != nil {
+		r.log.Error(ctx, "Error after scanning all rows", "error", err)
+		return nil, fmt.Errorf("error after scanning lifts: %w", err)
+	}
+
+	r.log.Info(ctx, "Successfully listed all lifts", "count", lifts)
 	return lifts, nil
 }
 
@@ -125,17 +144,19 @@ func (r *Repository) SaveLift(ctx context.Context, lift *domain.Lift) error {
 	}
 	defer stmt.Close()
 
+	statusStr := domain.LiftStatusToString(lift.Status)
+
 	r.log.Debug(ctx, "Executing SQL",
-		"lift_id", lift.ID(),
-		"current_floor", lift.CurrentFloor(),
-		"status", lift.Status(),
-		"capacity", lift.Capacity())
+		"lift_id", lift.ID,
+		"current_floor", lift.CurrentFloor,
+		"status", statusStr,
+		"capacity", lift.Capacity)
 
 	_, err = stmt.ExecContext(ctx,
-		lift.ID(),
-		lift.CurrentFloor(),
-		lift.Status(),
-		lift.Capacity())
+		lift.ID,
+		lift.CurrentFloor,
+		statusStr,
+		lift.Capacity)
 	if err != nil {
 		r.log.Error(ctx, "Failed to save lift", "error", err)
 		return fmt.Errorf("failed to save lift: %w", err)
@@ -143,10 +164,6 @@ func (r *Repository) SaveLift(ctx context.Context, lift *domain.Lift) error {
 
 	// r.log.Info(ctx, "Lift saved successfully", "lift_id", lift.ID())
 	return nil
-}
-
-func (r *Repository) UpdateLift(ctx context.Context, lift *domain.Lift) error {
-	return r.SaveLift(ctx, lift)
 }
 
 func (r *Repository) DeleteLift(ctx context.Context, id string) error {
@@ -260,12 +277,11 @@ func (r *Repository) GetSystem(ctx context.Context) (*domain.System, error) {
 		r.log.Error(ctx, "Failed to create new system from configuration", "error", err)
 		return nil, fmt.Errorf("Failed to create new system from configuration: %w", err)
 	}
-	r.log.Info(ctx, "Successfully retrieved system configuration", 
-		"total_floors", system.TotalFloors(), 
+	r.log.Info(ctx, "Successfully retrieved system configuration",
+		"total_floors", system.TotalFloors(),
 		"total_lifts", system.TotalLifts())
 	return system, nil
 }
-
 
 func (r *Repository) SaveSystem(ctx context.Context, system *domain.System) error {
 	query := `
@@ -296,6 +312,48 @@ func (r *Repository) GetAllFloors(ctx context.Context) ([]*domain.Floor, error) 
 // Close closes the database connection
 func (r *Repository) Close() error {
 	return r.db.Close()
+}
+
+func (r *Repository) UpdateLift(ctx context.Context, lift *domain.Lift) error {
+	r.log.Info(ctx, "Updating lift", "lift_id", lift.ID)
+
+	query := `
+		UPDATE lifts
+		SET current_floor = ?, status = ?, capacity = ?
+		WHERE id = ?
+	`
+
+	statusStr := domain.LiftStatusToString(lift.Status)
+
+	r.log.Debug(ctx, "Executing SQL",
+		"lift_id", lift.ID,
+		"current_floor", lift.CurrentFloor,
+		"status", statusStr,
+		"capacity", lift.Capacity)
+
+	result, err := r.db.ExecContext(ctx, query,
+		lift.CurrentFloor,
+		statusStr,
+		lift.Capacity,
+		lift.ID)
+	if err != nil {
+		r.log.Error(ctx, "Failed to update lift", "error", err)
+		return fmt.Errorf("failed to update lift: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		r.log.Error(ctx, "Failed to get rows affected", "error", err)
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+
+	if rowsAffected == 0 {
+		r.log.Warn(ctx, "No lift updated", "lift_id", lift.ID)
+		return fmt.Errorf("lift not found: %s", lift.ID)
+	}
+
+	r.log.Info(ctx, "Lift updated successfully", "lift_id", lift.ID)
+	return nil
 }
 
 // Ensure Repository implements ports.Repository interface

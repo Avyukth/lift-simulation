@@ -15,7 +15,7 @@ type LiftService struct {
 	repo     ports.LiftRepository
 	eventBus ports.EventBus
 	wsHub    *ws.WebSocketHub
-	log  *logger.Logger
+	log      *logger.Logger
 }
 
 // NewLiftService creates a new instance of LiftService
@@ -44,7 +44,7 @@ func (s *LiftService) MoveLift(ctx context.Context, liftID string, targetFloor i
 	}
 
 	// Publish an event about the lift movement
-	event := domain.NewLiftMovedEvent(lift.ID(), lift.CurrentFloor())
+	event := domain.NewLiftMovedEvent(lift.ID, lift.CurrentFloor)
 	s.wsHub.BroadcastUpdate(event)
 	return s.eventBus.Publish(ctx, event)
 }
@@ -80,7 +80,7 @@ func (s *LiftService) AssignLiftToFloor(ctx context.Context, floorNum int, direc
 	}
 
 	// Publish an event about the lift assignment
-	event := domain.NewLiftAssignedEvent(assignedLift.ID(), floorNum)
+	event := domain.NewLiftAssignedEvent(assignedLift.ID, floorNum)
 	if err := s.eventBus.Publish(ctx, event); err != nil {
 		return nil, err
 	}
@@ -95,8 +95,8 @@ func (s *LiftService) findNearestAvailableLift(lifts []*domain.Lift, floorNum in
 
 	for _, lift := range lifts {
 		if lift.IsAvailable() {
-			distance := abs(lift.CurrentFloor() - floorNum)
-			if distance < minDistance || (distance == minDistance && lift.Direction() == direction) {
+			distance := abs(lift.CurrentFloor - floorNum)
+			if distance < minDistance || (distance == minDistance && lift.Direction == direction) {
 				minDistance = distance
 				nearestLift = lift
 			}

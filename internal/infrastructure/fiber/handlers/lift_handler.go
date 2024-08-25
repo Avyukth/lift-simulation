@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"fmt"
+
 	"github.com/Avyukth/lift-simulation/internal/application/services"
 	"github.com/Avyukth/lift-simulation/internal/domain"
 	"github.com/gofiber/fiber/v2"
@@ -21,7 +23,7 @@ func NewLiftHandler(liftService *services.LiftService) *LiftHandler {
 // GetLift handles GET requests to retrieve a specific lift
 func (h *LiftHandler) GetLift(c *fiber.Ctx) error {
 	liftID := c.Params("id")
-	
+
 	lift, err := h.liftService.GetLiftStatus(c.Context(), liftID)
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
@@ -36,6 +38,7 @@ func (h *LiftHandler) GetLift(c *fiber.Ctx) error {
 func (h *LiftHandler) ListLifts(c *fiber.Ctx) error {
 	lifts, err := h.liftService.ListLifts(c.Context())
 	if err != nil {
+		fmt.Println("Failed to retrieve lifts", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to retrieve lifts",
 		})
@@ -47,7 +50,7 @@ func (h *LiftHandler) ListLifts(c *fiber.Ctx) error {
 // MoveLift handles POST requests to move a lift
 func (h *LiftHandler) MoveLift(c *fiber.Ctx) error {
 	liftID := c.Params("id")
-	
+
 	var request struct {
 		TargetFloor int `json:"targetFloor"`
 	}
@@ -71,7 +74,7 @@ func (h *LiftHandler) MoveLift(c *fiber.Ctx) error {
 // AssignLiftToFloor handles POST requests to assign a lift to a floor
 func (h *LiftHandler) AssignLiftToFloor(c *fiber.Ctx) error {
 	var request struct {
-		FloorNumber int            `json:"floorNumber"`
+		FloorNumber int              `json:"floorNumber"`
 		Direction   domain.Direction `json:"direction"`
 	}
 
@@ -94,7 +97,7 @@ func (h *LiftHandler) AssignLiftToFloor(c *fiber.Ctx) error {
 // SetLiftStatus handles PUT requests to set a lift's status
 func (h *LiftHandler) SetLiftStatus(c *fiber.Ctx) error {
 	liftID := c.Params("id")
-	
+
 	var request struct {
 		Status domain.LiftStatus `json:"status"`
 	}
