@@ -174,10 +174,9 @@ func run(ctx context.Context, log *logger.Logger, fiberLog *logger.FiberLogger) 
 
 		ctx, cancel := context.WithTimeout(ctx, cfg.Web.ShutdownTimeout)
 		defer cancel()
+
 		if err := app.ShutdownWithContext(ctx); err != nil {
-			if shutdownErr := app.Shutdown(); shutdownErr != nil {
-				return fmt.Errorf("could not stop server gracefully: %w (shutdown error: %v)", err, shutdownErr)
-			}
+			app.Shutdown()
 			return fmt.Errorf("could not stop server gracefully: %w", err)
 		}
 	}
