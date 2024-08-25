@@ -17,15 +17,15 @@ func NewFiberLogger(logger *Logger) *FiberLogger {
 // LogWithFiberContext logs a message with the given level and Fiber context
 func (fl *FiberLogger) LogWithFiberContext(c *fiber.Ctx, level Level, msg string, args ...any) {
 	ctx := c.Context()
-	
+
 	// Add Fiber-specific information to the log
-	args = append(args, 
+	args = append(args,
 		"path", c.Path(),
 		"method", c.Method(),
 		"ip", c.IP(),
 		"user_agent", c.Get("User-Agent"),
 	)
-	
+
 	switch level {
 	case LevelDebug:
 		fl.Debug(ctx, msg, args...)

@@ -68,7 +68,6 @@ func setValues(ctx context.Context, v *Values) context.Context {
 	return context.WithValue(ctx, key, v)
 }
 
-
 func SetLogger(ctx context.Context, log *logger.Logger) context.Context {
 	return context.WithValue(ctx, loggerKey, log)
 }

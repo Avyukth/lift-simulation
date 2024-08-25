@@ -141,8 +141,17 @@ func run(ctx context.Context, log *logger.Logger, fiberLog *logger.FiberLogger) 
 	// 	AllowOrigins: "http://localhost:6000", // Replace with your web app's origin
 	// 	AllowMethods: "GET, POST, PUT, DELETE, OPTIONS",
 	// }))
+	routeConfig := config.RouteConfig{
+		App:           app,
+		LiftHandler:   liftHandler,
+		FloorHandler:  floorHandler,
+		SystemHandler: systemHandler,
+		Hub:           hub,
+		FiberLog:      fiberLog,
+		Repo:          repo,
+	}
 
-	routes.SetupRoutes(app, liftHandler, floorHandler, systemHandler, hub, fiberLog, repo)
+	routes.SetupRoutes(routeConfig)
 	// Add a test route
 	app.Get("/test", func(c *fiber.Ctx) error {
 		return c.SendString("API is working")

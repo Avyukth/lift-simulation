@@ -1,0 +1,64 @@
+# Build stage
+FROM golang:1.23-alpine AS builder
+
+# Install build dependencies
+RUN apk add --no-cache git
+
+# Set working directory
+WORKDIR /app
+
+# Create a non-root user
+RUN adduser -D -g '' appuser
+
+# Copy the entire src directory
+COPY src/ .
+
+# Download all dependencies
+RUN go mod download
+
+# Build arguments
+ARG BUILD_REF
+ARG BUILD_DATE
+
+# Build the application
+# Adjust the path to main.go if necessary
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags "-X main.build=${BUILD_REF}" -o lift-simulation ./cmd/api
+
+# Run the tests
+RUN go test ./...
+
+# Final stage
+FROM alpine:3.20
+
+# Install runtime dependencies
+RUN apk --no-cache add ca-certificates tzdata
+
+# Import the user and group files from the builder
+COPY --from=builder /etc/passwd /etc/passwd
+
+# Create the /app directory and set ownership
+RUN mkdir /app && chown appuser:appuser /app
+
+# Set working directory
+WORKDIR /app
+
+# Copy the binary from builder
+COPY --from=builder --chown=appuser:appuser /app/lift-simulation .
+
+# Copy the .env file
+# Assuming .env is now in the src folder
+COPY --chown=appuser:appuser src/.env .
+
+# Use the non-root user
+USER appuser
+
+# Command to run the executable
+CMD ["./lift-simulation"]
+
+# Metadata
+LABEL org.opencontainers.image.created="${BUILD_DATE}" \
+    org.opencontainers.image.title="lift-simulation" \
+    org.opencontainers.image.authors="Your Name <makur.subrajit@gmail.com>" \
+    org.opencontainers.image.source="https://github.com/Avyukth/lift-simulation" \
+    org.opencontainers.image.revision="${BUILD_REF}" \
+    org.opencontainers.image.vendor="subhrajit.me"

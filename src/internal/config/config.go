@@ -4,7 +4,12 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/Avyukth/lift-simulation/internal/application/ports"
+	"github.com/Avyukth/lift-simulation/internal/infrastructure/fiber/handlers"
+	ws "github.com/Avyukth/lift-simulation/internal/infrastructure/fiber/websockets"
+	"github.com/Avyukth/lift-simulation/pkg/logger"
 	"github.com/ardanlabs/conf/v3"
+	"github.com/gofiber/fiber/v2"
 )
 
 // Config holds all configuration for our program
@@ -40,6 +45,16 @@ type Config struct {
 		MaxLifts      int `conf:"default:10"`
 		FloorTripTime int `conf:"default:2"`
 	}
+}
+
+type RouteConfig struct {
+	App           *fiber.App
+	LiftHandler   *handlers.LiftHandler
+	FloorHandler  *handlers.FloorHandler
+	SystemHandler *handlers.SystemHandler
+	Hub           *ws.WebSocketHub
+	FiberLog      *logger.FiberLogger
+	Repo          ports.Repository
 }
 
 // LoadConfig reads configuration from environment variables.

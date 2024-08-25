@@ -3,12 +3,10 @@ package routes
 import (
 	"net/http"
 
-	"github.com/Avyukth/lift-simulation/internal/application/ports"
-	"github.com/Avyukth/lift-simulation/internal/infrastructure/fiber/handlers"
+	"github.com/Avyukth/lift-simulation/internal/config"
 	ws "github.com/Avyukth/lift-simulation/internal/infrastructure/fiber/websockets"
 
 	"github.com/Avyukth/lift-simulation/internal/infrastructure/fiber/middleware"
-	"github.com/Avyukth/lift-simulation/pkg/logger"
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/filesystem"
@@ -16,10 +14,19 @@ import (
 )
 
 // SetupRoutes configures all the routes for the lift simulation API
-func SetupRoutes(app *fiber.App, liftHandler *handlers.LiftHandler, floorHandler *handlers.FloorHandler, systemHandler *handlers.SystemHandler, hub *ws.WebSocketHub, fiberLog *logger.FiberLogger, repo ports.Repository) {
+
+func SetupRoutes(config config.RouteConfig) {
 	// Middleware
+	app := config.App
+	liftHandler := config.LiftHandler
+	floorHandler := config.FloorHandler
+	systemHandler := config.SystemHandler
+	hub := config.Hub
+	fiberLog := config.FiberLog
+	repo := config.Repo
+
 	authConfig := middleware.Config{
-		JWTSecret: "your-jwt-secret", // In production, use a secure method to store this
+		JWTSecret: "your-jwt-secret",
 	}
 	systemVerification := middleware.NewSystemVerificationMiddleware(repo, fiberLog)
 	_ = middleware.New(authConfig)
@@ -82,8 +89,6 @@ func SetupRoutes(app *fiber.App, liftHandler *handlers.LiftHandler, floorHandler
 // WebSocketHandler handles WebSocket connections for real-time updates
 func WebSocketHandler() fiber.Handler {
 	return websocket.New(func(c *websocket.Conn) {
-		// This handler will be called when a client attempts to establish a WebSocket connection
-		// We don't need to do anything here, as the actual connection handling is done in WebSocketConnectHandler
 	})
 }
 
@@ -111,10 +116,7 @@ func WebSocketConnectHandler(hub *ws.WebSocketHub) func(*websocket.Conn) {
 			}
 
 			if messageType == websocket.TextMessage {
-				// Handle the message if needed
-				// For now, we'll just echo it back
 				if err := c.WriteMessage(websocket.TextMessage, message); err != nil {
-					// Log the error
 					break
 				}
 			}
