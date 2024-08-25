@@ -1,47 +1,53 @@
 package domain
 
-import "errors"
+import (
+	"errors"
+)
 
 // Floor represents a floor in the lift system
 type Floor struct {
-	number         int
-	upButtonActive bool
-	downButtonActive bool
+	ID               string
+	Number           int
+	UpButtonActive   bool
+	DownButtonActive bool
 }
 
 // NewFloor creates a new Floor instance
-func NewFloor(number int) *Floor {
+func NewFloor(id string, number int) *Floor {
 	return &Floor{
-		number: number,
+		ID:     id,
+		Number: number,
 	}
 }
 
-// Number returns the floor number
-func (f *Floor) Number() int {
-	return f.number
-}
-func (f *Floor) SetUpButtonActive(active bool){
-	f.upButtonActive = active
-}
-func (f *Floor) SetDownButtonActive(active bool){
-	f.downButtonActive = active
-}
-func (f *Floor) GetUpButtonActive()bool{
-	return f.upButtonActive
-}
-func (f *Floor) GetDownButtonActive()bool{
-	return f.downButtonActive
+// GetNumber returns the floor number
+func (f *Floor) GetNumber() int {
+	return f.Number
 }
 
+func (f *Floor) SetUpButtonActive(active bool) {
+	f.UpButtonActive = active
+}
 
+func (f *Floor) SetDownButtonActive(active bool) {
+	f.DownButtonActive = active
+}
+
+func (f *Floor) GetUpButtonActive() bool {
+	return f.UpButtonActive
+}
+
+func (f *Floor) GetDownButtonActive() bool {
+	return f.DownButtonActive
+}
 
 // RequestLift activates the appropriate call button
 func (f *Floor) RequestLift(direction Direction) error {
 	switch direction {
 	case Up:
-		f.upButtonActive = true
+		f.UpButtonActive = true
 	case Down:
-		f.downButtonActive = true
+		f.DownButtonActive = true
 	default:
 		return errors.New("invalid direction")
 	}
@@ -52,9 +58,9 @@ func (f *Floor) RequestLift(direction Direction) error {
 func (f *Floor) CancelRequest(direction Direction) error {
 	switch direction {
 	case Up:
-		f.upButtonActive = false
+		f.UpButtonActive = false
 	case Down:
-		f.downButtonActive = false
+		f.DownButtonActive = false
 	default:
 		return errors.New("invalid direction")
 	}
@@ -63,49 +69,54 @@ func (f *Floor) CancelRequest(direction Direction) error {
 
 // HasActiveCall checks if there's an active call on this floor
 func (f *Floor) HasActiveCall() bool {
-	return f.upButtonActive || f.downButtonActive
+	return f.UpButtonActive || f.DownButtonActive
 }
 
 // IsUpButtonActive checks if the up button is active
 func (f *Floor) IsUpButtonActive() bool {
-	return f.upButtonActive
+	return f.UpButtonActive
 }
 
 // IsDownButtonActive checks if the down button is active
 func (f *Floor) IsDownButtonActive() bool {
-	return f.downButtonActive
+	return f.DownButtonActive
 }
 
 // ResetButtons resets both call buttons
 func (f *Floor) ResetButtons() {
-	f.upButtonActive = false
-	f.downButtonActive = false
+	f.UpButtonActive = false
+	f.DownButtonActive = false
 }
 
-func NewFloorButtonsResetEvent(floorNum int) Event {
-    return Event{
-        Type: FloorButtonsReset,
-        Payload: struct {
-            FloorNumber int
-        }{
-            FloorNumber: floorNum,
-        },
-    }
+func NewFloorButtonsResetEvent(floorID string, floorNum int) Event {
+	return Event{
+		Type: FloorButtonsReset,
+		Payload: struct {
+			FloorID     string
+			FloorNumber int
+		}{
+			FloorID:     floorID,
+			FloorNumber: floorNum,
+		},
+	}
 }
 
-func NewLiftAssignedEvent(liftID string, floorNum int) Event {
-    return Event{
-        Type: LiftAssigned,
-        Payload: struct {
-            LiftID      string
-            FloorNumber int
-        }{
-            LiftID:      liftID,
-            FloorNumber: floorNum,
-        },
-    }
+func NewLiftAssignedEvent(liftID string, floorID string, floorNum int) Event {
+	return Event{
+		Type: LiftAssigned,
+		Payload: struct {
+			LiftID      string
+			FloorID     string
+			FloorNumber int
+		}{
+			LiftID:      liftID,
+			FloorID:     floorID,
+			FloorNumber: floorNum,
+		},
+	}
 }
-// Add this setter method
+
+// SetNumber sets the floor number
 func (f *Floor) SetNumber(number int) {
-    f.number = number
+	f.Number = number
 }

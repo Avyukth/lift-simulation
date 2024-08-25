@@ -26,6 +26,7 @@ const (
 // Lift represents a lift in the system
 type Lift struct {
 	ID           string     `json:"id"`
+	Name         string     `json:"name"`
 	CurrentFloor int        `json:"current_floor"`
 	TargetFloor  int        `json:"target_floor"`
 	Direction    Direction  `json:"direction"`
@@ -36,10 +37,11 @@ type Lift struct {
 }
 
 // NewLift creates a new Lift instance
-func NewLift(id string) *Lift {
+func NewLift(id, name string) *Lift {
 	return &Lift{
 		ID:           id,
-		CurrentFloor: 1,
+		Name:         name,
+		CurrentFloor: 0, // Start at ground floor (0-based)
 		Direction:    Idle,
 		Status:       Available,
 		Capacity:     10,
@@ -129,8 +131,8 @@ func (l *Lift) AssignToFloor(floor int) error {
 }
 
 func (l *Lift) Reset() {
-	l.CurrentFloor = 1
-	l.TargetFloor = 1
+	l.CurrentFloor = 0 // Reset to ground floor (0-based)
+	l.TargetFloor = 0
 	l.Direction = Idle
 	l.Status = Available
 	l.Passengers = 0

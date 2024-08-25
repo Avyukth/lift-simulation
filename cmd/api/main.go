@@ -86,7 +86,6 @@ func run(ctx context.Context, log *logger.Logger, fiberLog *logger.FiberLogger) 
 
 	// -------------------------------------------------------------------------
 	// Event Bus Support
-
 	log.Info(ctx, "startup", "status", "initializing event bus")
 
 	eventBus, err := eventbus.NewRedisPubSub(cfg.Redis.URL)
@@ -142,7 +141,7 @@ func run(ctx context.Context, log *logger.Logger, fiberLog *logger.FiberLogger) 
 	// 	AllowMethods: "GET, POST, PUT, DELETE, OPTIONS",
 	// }))
 
-	routes.SetupRoutes(app, liftHandler, floorHandler, systemHandler, hub, fiberLog)
+	routes.SetupRoutes(app, liftHandler, floorHandler, systemHandler, hub, fiberLog, repo)
 	// Add a test route
 	app.Get("/test", func(c *fiber.Ctx) error {
 		return c.SendString("API is working")

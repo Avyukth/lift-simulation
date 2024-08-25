@@ -1,8 +1,8 @@
 package handlers
 
 import (
-	"github.com/gofiber/fiber/v2"
 	"github.com/Avyukth/lift-simulation/internal/application/services"
+	"github.com/gofiber/fiber/v2"
 )
 
 // SystemHandler handles HTTP requests related to the overall lift system
@@ -33,7 +33,7 @@ func (h *SystemHandler) ConfigureSystem(c *fiber.Ctx) error {
 	err := h.systemService.ConfigureSystem(c.Context(), config.Floors, config.Lifts)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to configure system",
+			"error":   "Failed to configure system",
 			"details": err.Error(),
 		})
 	}
@@ -55,8 +55,8 @@ func (h *SystemHandler) GetSystemConfiguration(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(fiber.Map{
-		"total_floors": system.TotalFloors(),
-		"total_lifts":  system.TotalLifts(),
+		"total_floors": system.TotalFloors,
+		"total_lifts":  system.TotalLifts,
 	})
 }
 
@@ -77,7 +77,7 @@ func (h *SystemHandler) ResetSystem(c *fiber.Ctx) error {
 	err := h.systemService.ResetSystem(c.Context())
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to reset system",
+			"error":   "Failed to reset system",
 			"details": err.Error(),
 		})
 	}
@@ -115,7 +115,7 @@ func (h *SystemHandler) SimulateTraffic(c *fiber.Ctx) error {
 	err := h.systemService.SimulateTraffic(c.Context(), request.Duration, request.Intensity)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to simulate traffic",
+			"error":   "Failed to simulate traffic",
 			"details": err.Error(),
 		})
 	}

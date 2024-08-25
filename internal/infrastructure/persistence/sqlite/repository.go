@@ -40,17 +40,19 @@ func createTables(db *sql.DB) error {
 	queries := []string{
 		`CREATE TABLE IF NOT EXISTS lifts (
 			id TEXT PRIMARY KEY,
+			name TEXT,
 			current_floor INTEGER,
 			status TEXT,
 			capacity INTEGER
 		)`,
 		`CREATE TABLE IF NOT EXISTS floors (
-			floor_number INTEGER PRIMARY KEY,
+			id TEXT PRIMARY KEY,
+			floor_number INTEGER,
 			up_button_active BOOLEAN,
 			down_button_active BOOLEAN
 		)`,
 		`CREATE TABLE IF NOT EXISTS system (
-			id INTEGER PRIMARY KEY CHECK (id = 1),
+			id TEXT PRIMARY KEY,
 			total_floors INTEGER,
 			total_lifts INTEGER
 		)`,
@@ -69,30 +71,37 @@ func createTables(db *sql.DB) error {
 // Lift Repository Methods
 
 func (r *Repository) GetLift(ctx context.Context, id string) (*domain.Lift, error) {
-	query := `SELECT id, current_floor, status, capacity FROM lifts WHERE id = ?`
-	var lift domain.Lift
+	r.log.Info(ctx, "Getting lift", "lift_id", id)
+
+	query := `SELECT id, name, current_floor, status, capacity FROM lifts WHERE id = ?`
+	var liftID, name string
 	var currentFloor int
-	var status domain.LiftStatus
+	var statusStr string
 	var capacity int
-	err := r.db.QueryRowContext(ctx, query, id).Scan(&currentFloor, &status, &capacity)
+
+	err := r.db.QueryRowContext(ctx, query, id).Scan(&liftID, &name, &currentFloor, &statusStr, &capacity)
 	if err == sql.ErrNoRows {
-		r.log.Error(ctx, "Failed to get lift", "error", err)
+		r.log.Error(ctx, "Lift not found", "lift_id", id)
 		return nil, fmt.Errorf("lift not found: %s", id)
 	}
 	if err != nil {
-		r.log.Error(ctx, "Failed to get lift", "error", err)
+		r.log.Error(ctx, "Failed to get lift", "lift_id", id, "error", err)
 		return nil, fmt.Errorf("failed to get lift: %w", err)
 	}
+
+	lift := domain.NewLift(liftID, name)
 	lift.SetCurrentFloor(currentFloor)
-	lift.SetStatus(status)
+	lift.SetStatus(domain.StringToLiftStatus(statusStr))
 	lift.SetCapacity(capacity)
-	return &lift, nil
+
+	r.log.Info(ctx, "Successfully retrieved lift", "lift_id", id, "current_floor", currentFloor, "status", statusStr, "capacity", capacity)
+	return lift, nil
 }
 
 func (r *Repository) ListLifts(ctx context.Context) ([]*domain.Lift, error) {
 	r.log.Info(ctx, "Listing all lifts")
 
-	query := `SELECT id, current_floor, status, capacity FROM lifts`
+	query := `SELECT id, name, current_floor, status, capacity FROM lifts`
 	rows, err := r.db.QueryContext(ctx, query)
 	if err != nil {
 		r.log.Error(ctx, "Failed to query lifts", "error", err)
@@ -102,24 +111,24 @@ func (r *Repository) ListLifts(ctx context.Context) ([]*domain.Lift, error) {
 
 	var lifts []*domain.Lift
 	for rows.Next() {
-		var id string
+		var id, name string
 		var currentFloor int
 		var statusStr string
 		var capacity int
 
-		if err := rows.Scan(&id, &currentFloor, &statusStr, &capacity); err != nil {
+		if err := rows.Scan(&id, &name, &currentFloor, &statusStr, &capacity); err != nil {
 			r.log.Error(ctx, "Failed to scan lift row", "error", err)
 			return nil, fmt.Errorf("failed to scan lift: %w", err)
 		}
 
-		lift := domain.NewLift(id)
+		lift := domain.NewLift(id, name)
 		lift.SetCurrentFloor(currentFloor)
 		lift.SetStatus(domain.StringToLiftStatus(statusStr))
 		lift.SetCapacity(capacity)
 
 		lifts = append(lifts, lift)
 
-		r.log.Info(ctx, "Scanned lift", "id", id, "current_floor", currentFloor, "status", statusStr, "capacity", capacity)
+		r.log.Info(ctx, "Scanned lift", "id", id, "name", name, "current_floor", currentFloor, "status", statusStr, "capacity", capacity)
 	}
 
 	if err = rows.Err(); err != nil {
@@ -127,16 +136,14 @@ func (r *Repository) ListLifts(ctx context.Context) ([]*domain.Lift, error) {
 		return nil, fmt.Errorf("error after scanning lifts: %w", err)
 	}
 
-	r.log.Info(ctx, "Successfully listed all lifts", "count", lifts)
+	r.log.Info(ctx, "Successfully listed all lifts", "count", len(lifts))
 	return lifts, nil
 }
 
 func (r *Repository) SaveLift(ctx context.Context, lift *domain.Lift) error {
-	// r.log.Info(ctx, "Saving lift", "lift_id", lift.ID())
-
 	stmt, err := r.db.PrepareContext(ctx, `
-		INSERT OR REPLACE INTO lifts (id, current_floor, status, capacity)
-		VALUES (?, ?, ?, ?)
+		INSERT OR REPLACE INTO lifts (id, name, current_floor, status, capacity)
+		VALUES (?, ?, ?, ?, ?)
 	`)
 	if err != nil {
 		r.log.Error(ctx, "Failed to prepare statement", "error", err)
@@ -148,12 +155,14 @@ func (r *Repository) SaveLift(ctx context.Context, lift *domain.Lift) error {
 
 	r.log.Debug(ctx, "Executing SQL",
 		"lift_id", lift.ID,
+		"name", lift.Name,
 		"current_floor", lift.CurrentFloor,
 		"status", statusStr,
 		"capacity", lift.Capacity)
 
 	_, err = stmt.ExecContext(ctx,
 		lift.ID,
+		lift.Name,
 		lift.CurrentFloor,
 		statusStr,
 		lift.Capacity)
@@ -162,7 +171,6 @@ func (r *Repository) SaveLift(ctx context.Context, lift *domain.Lift) error {
 		return fmt.Errorf("failed to save lift: %w", err)
 	}
 
-	// r.log.Info(ctx, "Lift saved successfully", "lift_id", lift.ID())
 	return nil
 }
 
@@ -176,27 +184,28 @@ func (r *Repository) DeleteLift(ctx context.Context, id string) error {
 }
 
 // Floor Repository Methods
-func (r *Repository) GetFloor(ctx context.Context, floorNum int) (*domain.Floor, error) {
-	query := `SELECT floor_number, up_button_active, down_button_active FROM floors WHERE floor_number = ?`
+func (r *Repository) GetFloor(ctx context.Context, id string) (*domain.Floor, error) {
+	query := `SELECT id, floor_number, up_button_active, down_button_active FROM floors WHERE id = ?`
 	var floor domain.Floor
+	var floorID string
 	var number int
 	var upButtonActive bool
 	var downButtonActive bool
-	err := r.db.QueryRowContext(ctx, query, floorNum).Scan(&number, &upButtonActive, &downButtonActive)
+	err := r.db.QueryRowContext(ctx, query, id).Scan(&floorID, &number, &upButtonActive, &downButtonActive)
 	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("floor not found: %d", floorNum)
+		return nil, fmt.Errorf("floor not found: %s", id)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to get floor: %w", err)
 	}
-	floor.SetNumber(number)
+	floor = *domain.NewFloor(floorID, number)
 	floor.SetUpButtonActive(upButtonActive)
 	floor.SetDownButtonActive(downButtonActive)
 	return &floor, nil
 }
 
 func (r *Repository) ListFloors(ctx context.Context) ([]*domain.Floor, error) {
-	query := `SELECT floor_number, up_button_active, down_button_active FROM floors`
+	query := `SELECT id, floor_number, up_button_active, down_button_active FROM floors`
 	rows, err := r.db.QueryContext(ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list floors: %w", err)
@@ -205,27 +214,25 @@ func (r *Repository) ListFloors(ctx context.Context) ([]*domain.Floor, error) {
 
 	var floors []*domain.Floor
 	for rows.Next() {
-		var floor domain.Floor
+		var floorID string
 		var number int
 		var upButtonActive bool
 		var downButtonActive bool
-		if err := rows.Scan(&number, &upButtonActive, &downButtonActive); err != nil {
+		if err := rows.Scan(&floorID, &number, &upButtonActive, &downButtonActive); err != nil {
 			return nil, fmt.Errorf("failed to scan floor: %w", err)
 		}
-		floor.SetNumber(number)
+		floor := domain.NewFloor(floorID, number)
 		floor.SetUpButtonActive(upButtonActive)
 		floor.SetDownButtonActive(downButtonActive)
-		floors = append(floors, &floor)
+		floors = append(floors, floor)
 	}
 	return floors, nil
 }
 
 func (r *Repository) SaveFloor(ctx context.Context, floor *domain.Floor) error {
-	// r.log.Info(ctx, "Saving floor", "floor_number", floor.Number())
-
 	stmt, err := r.db.PrepareContext(ctx, `
-		INSERT OR REPLACE INTO floors (floor_number, up_button_active, down_button_active)
-		VALUES (?, ?, ?)
+		INSERT OR REPLACE INTO floors (id, floor_number, up_button_active, down_button_active)
+		VALUES (?, ?, ?, ?)
 	`)
 	if err != nil {
 		r.log.Error(ctx, "Failed to prepare statement", "error", err)
@@ -234,12 +241,14 @@ func (r *Repository) SaveFloor(ctx context.Context, floor *domain.Floor) error {
 	defer stmt.Close()
 
 	r.log.Debug(ctx, "Executing SQL",
-		"floor_number", floor.Number(),
+		"floor_id", floor.ID,
+		"floor_number", floor.Number,
 		"up_button", floor.GetUpButtonActive(),
 		"down_button", floor.GetDownButtonActive())
 
 	_, err = stmt.ExecContext(ctx,
-		floor.Number(),
+		floor.ID,
+		floor.Number,
 		floor.GetUpButtonActive(),
 		floor.GetDownButtonActive())
 	if err != nil {
@@ -247,7 +256,6 @@ func (r *Repository) SaveFloor(ctx context.Context, floor *domain.Floor) error {
 		return fmt.Errorf("failed to save floor: %w", err)
 	}
 
-	// r.log.Info(ctx, "Floor saved successfully", "floor_number", floor.Number())
 	return nil
 }
 
@@ -260,9 +268,10 @@ func (r *Repository) UpdateFloor(ctx context.Context, floor *domain.Floor) error
 func (r *Repository) GetSystem(ctx context.Context) (*domain.System, error) {
 	r.log.Info(ctx, "Getting system configuration")
 
-	query := `SELECT total_floors, total_lifts FROM system WHERE id = 1`
+	query := `SELECT id, total_floors, total_lifts FROM system LIMIT 1`
+	var systemID string
 	var totalFloors, totalLifts int
-	err := r.db.QueryRowContext(ctx, query).Scan(&totalFloors, &totalLifts)
+	err := r.db.QueryRowContext(ctx, query).Scan(&systemID, &totalFloors, &totalLifts)
 	if err == sql.ErrNoRows {
 		r.log.Error(ctx, "System configuration not found")
 		return nil, fmt.Errorf("system configuration not found")
@@ -272,25 +281,24 @@ func (r *Repository) GetSystem(ctx context.Context) (*domain.System, error) {
 		return nil, fmt.Errorf("failed to get system configuration: %w", err)
 	}
 
-	system, err := domain.NewSystem(totalFloors, totalLifts)
+	system, err := domain.NewSystem(systemID, totalFloors, totalLifts)
 	if err != nil {
 		r.log.Error(ctx, "Failed to create new system from configuration", "error", err)
 		return nil, fmt.Errorf("Failed to create new system from configuration: %w", err)
 	}
 	r.log.Info(ctx, "Successfully retrieved system configuration",
-		"total_floors", system.TotalFloors(),
-		"total_lifts", system.TotalLifts())
+		"system_id", system.ID,
+		"total_floors", system.TotalFloors,
+		"total_lifts", system.TotalLifts)
 	return system, nil
 }
 
 func (r *Repository) SaveSystem(ctx context.Context, system *domain.System) error {
 	query := `
 		INSERT OR REPLACE INTO system (id, total_floors, total_lifts)
-		VALUES (1, ?, ?)
+		VALUES (?, ?, ?)
 	`
-	totalFloors := system.TotalFloors()
-	totalLifts := system.TotalLifts()
-	_, err := r.db.ExecContext(ctx, query, totalFloors, totalLifts)
+	_, err := r.db.ExecContext(ctx, query, system.ID, system.TotalFloors, system.TotalLifts)
 	if err != nil {
 		return fmt.Errorf("failed to save system configuration: %w", err)
 	}
@@ -319,7 +327,7 @@ func (r *Repository) UpdateLift(ctx context.Context, lift *domain.Lift) error {
 
 	query := `
 		UPDATE lifts
-		SET current_floor = ?, status = ?, capacity = ?
+		SET name = ?, current_floor = ?, status = ?, capacity = ?
 		WHERE id = ?
 	`
 
@@ -327,11 +335,13 @@ func (r *Repository) UpdateLift(ctx context.Context, lift *domain.Lift) error {
 
 	r.log.Debug(ctx, "Executing SQL",
 		"lift_id", lift.ID,
+		"name", lift.Name,
 		"current_floor", lift.CurrentFloor,
 		"status", statusStr,
 		"capacity", lift.Capacity)
 
 	result, err := r.db.ExecContext(ctx, query,
+		lift.Name,
 		lift.CurrentFloor,
 		statusStr,
 		lift.Capacity,
@@ -354,6 +364,18 @@ func (r *Repository) UpdateLift(ctx context.Context, lift *domain.Lift) error {
 
 	r.log.Info(ctx, "Lift updated successfully", "lift_id", lift.ID)
 	return nil
+}
+func (r *Repository) GetFloorByNumber(ctx context.Context, floorNum int) (*domain.Floor, error) {
+	query := `SELECT id FROM floors WHERE floor_number = ?`
+	var floorID string
+	err := r.db.QueryRowContext(ctx, query, floorNum).Scan(&floorID)
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("floor not found: %d", floorNum)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get floor: %w", err)
+	}
+	return domain.NewFloor(floorID, floorNum), nil
 }
 
 // Ensure Repository implements ports.Repository interface

@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/Avyukth/lift-simulation/internal/application/ports"
 	"github.com/Avyukth/lift-simulation/internal/domain"
@@ -30,23 +31,32 @@ func NewLiftService(repo ports.LiftRepository, eventBus ports.EventBus, wsHub *w
 
 // MoveLift moves a lift to a target floor
 func (s *LiftService) MoveLift(ctx context.Context, liftID string, targetFloor int) error {
+	s.log.Info(ctx, "Moving lift", "lift_id", liftID, "target_floor", targetFloor)
+
 	lift, err := s.repo.GetLift(ctx, liftID)
 	if err != nil {
-		return err
+		s.log.Error(ctx, "Failed to retrieve lift", "lift_id", liftID, "error", err)
+		return fmt.Errorf("failed to retrieve lift: %w", err)
+	}
+
+	// Check if the lift is already on the target floor
+	if lift.CurrentFloor == targetFloor {
+		s.log.Info(ctx, "Lift is already on the target floor", "lift_id", liftID, "current_floor", lift.CurrentFloor)
+		return fmt.Errorf("lift is already on floor %d", targetFloor)
 	}
 
 	if err := lift.MoveTo(targetFloor); err != nil {
-		return err
+		s.log.Error(ctx, "Failed to move lift", "lift_id", liftID, "target_floor", targetFloor, "error", err)
+		return fmt.Errorf("failed to move lift: %w", err)
 	}
 
 	if err := s.repo.UpdateLift(ctx, lift); err != nil {
-		return err
+		s.log.Error(ctx, "Failed to update lift after move", "lift_id", liftID, "error", err)
+		return fmt.Errorf("failed to update lift after move: %w", err)
 	}
 
-	// Publish an event about the lift movement
-	event := domain.NewLiftMovedEvent(lift.ID, lift.CurrentFloor)
-	s.wsHub.BroadcastUpdate(event)
-	return s.eventBus.Publish(ctx, event)
+	s.log.Info(ctx, "Successfully moved lift", "lift_id", liftID, "target_floor", targetFloor)
+	return nil
 }
 
 // GetLiftStatus retrieves the current status of a lift
@@ -60,7 +70,7 @@ func (s *LiftService) ListLifts(ctx context.Context) ([]*domain.Lift, error) {
 }
 
 // AssignLiftToFloor assigns the most appropriate lift to service a floor request
-func (s *LiftService) AssignLiftToFloor(ctx context.Context, floorNum int, direction domain.Direction) (*domain.Lift, error) {
+func (s *LiftService) AssignLiftToFloor(ctx context.Context, floorNum int, floorId string, direction domain.Direction) (*domain.Lift, error) {
 	lifts, err := s.repo.ListLifts(ctx)
 	if err != nil {
 		return nil, err
@@ -80,7 +90,7 @@ func (s *LiftService) AssignLiftToFloor(ctx context.Context, floorNum int, direc
 	}
 
 	// Publish an event about the lift assignment
-	event := domain.NewLiftAssignedEvent(assignedLift.ID, floorNum)
+	event := domain.NewLiftAssignedEvent(assignedLift.ID, floorId, floorNum)
 	if err := s.eventBus.Publish(ctx, event); err != nil {
 		return nil, err
 	}

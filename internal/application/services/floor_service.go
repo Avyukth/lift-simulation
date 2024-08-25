@@ -26,7 +26,7 @@ func NewFloorService(repo ports.FloorRepository, eventBus ports.EventBus, liftSv
 
 // CallLift requests a lift to a specific floor
 func (s *FloorService) CallLift(ctx context.Context, floorNum int, direction domain.Direction) error {
-	floor, err := s.repo.GetFloor(ctx, floorNum)
+	floor, err := s.repo.GetFloorByNumber(ctx, floorNum)
 	if err != nil {
 		return fmt.Errorf("failed to get floor %d: %w", floorNum, err)
 	}
@@ -40,14 +40,14 @@ func (s *FloorService) CallLift(ctx context.Context, floorNum int, direction dom
 	}
 
 	// Assign a lift to this floor request
-	// assignedLift, err := s.liftSvc.AssignLiftToFloor(ctx, floorNum, direction)
+	// _, err := s.liftSvc.AssignLiftToFloor(ctx, floorNum, direction)
 	if err != nil {
 		return fmt.Errorf("failed to assign lift to floor %d: %w", floorNum, err)
 	}
 
 	// Publish an event about the lift call
 	// event := domain.NewLiftCalledEvent(floorNum, direction, assignedLift.ID())
-	event := domain.NewLiftCalledEvent(floorNum, direction)
+	event := domain.NewLiftCalledEvent(floor.ID, floorNum, direction)
 
 	if err := s.eventBus.Publish(ctx, event); err != nil {
 		return fmt.Errorf("failed to publish lift called event: %w", err)
@@ -58,7 +58,7 @@ func (s *FloorService) CallLift(ctx context.Context, floorNum int, direction dom
 
 // GetFloorStatus retrieves the current status of a floor
 func (s *FloorService) GetFloorStatus(ctx context.Context, floorNum int) (*domain.Floor, error) {
-	floor, err := s.repo.GetFloor(ctx, floorNum)
+	floor, err := s.repo.GetFloorByNumber(ctx, floorNum)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get floor %d: %w", floorNum, err)
 	}
@@ -76,7 +76,7 @@ func (s *FloorService) ListFloors(ctx context.Context) ([]*domain.Floor, error) 
 
 // ResetFloorButtons resets the call buttons on a floor after a lift has arrived
 func (s *FloorService) ResetFloorButtons(ctx context.Context, floorNum int) error {
-	floor, err := s.repo.GetFloor(ctx, floorNum)
+	floor, err := s.repo.GetFloorByNumber(ctx, floorNum)
 	if err != nil {
 		return fmt.Errorf("failed to get floor %d: %w", floorNum, err)
 	}
@@ -88,7 +88,7 @@ func (s *FloorService) ResetFloorButtons(ctx context.Context, floorNum int) erro
 	}
 
 	// Publish an event about the floor buttons being reset
-	event := domain.NewFloorButtonsResetEvent(floorNum)
+	event := domain.NewFloorButtonsResetEvent(floor.ID, floorNum)
 	if err := s.eventBus.Publish(ctx, event); err != nil {
 		return fmt.Errorf("failed to publish floor buttons reset event: %w", err)
 	}
@@ -106,9 +106,18 @@ func (s *FloorService) GetActiveFloorCalls(ctx context.Context) ([]int, error) {
 	activeCalls := []int{}
 	for _, floor := range floors {
 		if floor.HasActiveCall() {
-			activeCalls = append(activeCalls, floor.Number())
+			activeCalls = append(activeCalls, floor.Number)
 		}
 	}
 
 	return activeCalls, nil
+}
+
+// GetFloorByNumber retrieves a floor by its number
+func (s *FloorService) GetFloorByNumber(ctx context.Context, floorNum int) (*domain.Floor, error) {
+	floor, err := s.repo.GetFloorByNumber(ctx, floorNum)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get floor %d: %w", floorNum, err)
+	}
+	return floor, nil
 }
