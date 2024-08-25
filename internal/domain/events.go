@@ -12,6 +12,7 @@ const (
 	SystemReset              EventType = "SYSTEM_RESET"
 	FloorButtonsReset        EventType = "FLOOR_BUTTONS_RESET"
 	LiftAssigned             EventType = "LIFT_ASSIGNED"
+	LiftArrived              EventType = "LIFT_ARRIVED"
 	TrafficSimulationStarted EventType = "TRAFFIC_SIMULATION_STARTED"
 )
 
@@ -94,6 +95,21 @@ func NewSystemResetEvent(systemID string) Event {
 			SystemID string
 		}{
 			SystemID: systemID,
+		},
+	}
+}
+
+func NewLiftArrivedEvent(liftID, floorID string, floorNumber int) Event {
+	return Event{
+		Type: LiftArrived,
+		Payload: struct {
+			LiftID      string
+			FloorID     string
+			FloorNumber int
+		}{
+			LiftID:      liftID,
+			FloorID:     floorID,
+			FloorNumber: floorNumber,
 		},
 	}
 }

@@ -70,27 +70,24 @@ func (h *FloorHandler) CallLift(c *fiber.Ctx) error {
 		})
 	}
 
-	// Call the service method directly with floorNum
 	err = h.floorService.CallLift(c.Context(), floorNum, request.Direction)
 	if err != nil {
-		// Handle different types of errors
 		switch {
 		case errors.Is(err, domain.ErrFloorNotFound):
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 				"error": "Floor not found",
 			})
-		case errors.Is(err, domain.ErrLiftNotFound):
-			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-				"error": "Lift not found",
-			})
 		default:
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": "Failed to call lift",
+				"error":   "Failed to call lift",
+				"details": err.Error(),
 			})
 		}
 	}
 
-	return c.SendStatus(fiber.StatusOK)
+	return c.Status(fiber.StatusAccepted).JSON(fiber.Map{
+		"message": "Lift call accepted. Lift is on its way.",
+	})
 }
 
 // ResetFloorButtons handles POST requests to reset the call buttons on a floor
