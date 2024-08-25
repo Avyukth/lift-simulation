@@ -1,9 +1,11 @@
 package handlers
 
 import (
-	"github.com/gofiber/fiber/v2"
-	// "github.com/Avyukth/lift-simulation/internal/domain"
+	"errors"
+
 	"github.com/Avyukth/lift-simulation/internal/application/services"
+	"github.com/Avyukth/lift-simulation/internal/domain"
+	"github.com/gofiber/fiber/v2"
 )
 
 // FloorHandler handles HTTP requests related to floors
@@ -50,40 +52,46 @@ func (h *FloorHandler) ListFloors(c *fiber.Ctx) error {
 }
 
 // CallLift handles POST requests to call a lift to a specific floor
-// func (h *FloorHandler) CallLift(c *fiber.Ctx) error {
-// 	floorNum, err := c.ParamsInt("floorNum")
-// 	if err != nil {
-// 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-// 			"error": "Invalid floor number",
-// 		})
-// 	}
+func (h *FloorHandler) CallLift(c *fiber.Ctx) error {
+	floorNum, err := c.ParamsInt("floorNum")
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid floor number",
+		})
+	}
 
-// 	var request struct {
-// 		Direction domain.Direction `json:"direction"`
-// 	}
+	var request struct {
+		Direction domain.Direction `json:"direction"`
+	}
 
-// 	if err := c.BodyParser(&request); err != nil {
-// 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-// 			"error": "Invalid request body",
-// 		})
-// 	}
-// 	// Get floor ID from floor number
-// 	floor, err := h.floorService.GetFloorByNumber(c.Context(), floorNum)
-// 	if err != nil {
-// 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-// 			"error": "Floor not found",
-// 		})
-// 	}
+	if err := c.BodyParser(&request); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid request body",
+		})
+	}
 
-// 	err = h.floorService.CallLift(c.Context(), floor, request.Direction)
-// 	if err != nil {
-// 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-// 			"error": "Failed to call lift",
-// 		})
-// 	}
+	// Call the service method directly with floorNum
+	err = h.floorService.CallLift(c.Context(), floorNum, request.Direction)
+	if err != nil {
+		// Handle different types of errors
+		switch {
+		case errors.Is(err, domain.ErrFloorNotFound):
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"error": "Floor not found",
+			})
+		case errors.Is(err, domain.ErrLiftNotFound):
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"error": "Lift not found",
+			})
+		default:
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": "Failed to call lift",
+			})
+		}
+	}
 
-// 	return c.SendStatus(fiber.StatusAccepted)
-// }
+	return c.SendStatus(fiber.StatusOK)
+}
 
 // ResetFloorButtons handles POST requests to reset the call buttons on a floor
 func (h *FloorHandler) ResetFloorButtons(c *fiber.Ctx) error {

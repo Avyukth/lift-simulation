@@ -65,7 +65,7 @@ func SetupRoutes(app *fiber.App, liftHandler *handlers.LiftHandler, floorHandler
 	floors.Get("/", floorHandler.ListFloors)
 	floors.Get("/active-calls", floorHandler.GetActiveFloorCalls)
 	floors.Get("/:floorNum", floorHandler.GetFloorStatus)
-	// floors.Post("/:floorNum/call", floorHandler.CallLift)
+	floors.Post("/:floorNum/call", floorHandler.CallLift)
 	floors.Post("/:floorNum/reset", floorHandler.ResetFloorButtons)
 
 	// WebSocket route for real-time updates

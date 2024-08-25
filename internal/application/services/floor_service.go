@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/Avyukth/lift-simulation/internal/application/ports"
@@ -28,6 +29,9 @@ func NewFloorService(repo ports.FloorRepository, eventBus ports.EventBus, liftSv
 func (s *FloorService) CallLift(ctx context.Context, floorNum int, direction domain.Direction) error {
 	floor, err := s.repo.GetFloorByNumber(ctx, floorNum)
 	if err != nil {
+		if errors.Is(err, domain.ErrFloorNotFound) {
+			return domain.ErrFloorNotFound
+		}
 		return fmt.Errorf("failed to get floor %d: %w", floorNum, err)
 	}
 
@@ -40,13 +44,12 @@ func (s *FloorService) CallLift(ctx context.Context, floorNum int, direction dom
 	}
 
 	// Assign a lift to this floor request
-	// _, err := s.liftSvc.AssignLiftToFloor(ctx, floorNum, direction)
+	_, err = s.liftSvc.AssignLiftToFloor(ctx, floorNum, floor.ID, direction)
 	if err != nil {
 		return fmt.Errorf("failed to assign lift to floor %d: %w", floorNum, err)
 	}
 
 	// Publish an event about the lift call
-	// event := domain.NewLiftCalledEvent(floorNum, direction, assignedLift.ID())
 	event := domain.NewLiftCalledEvent(floor.ID, floorNum, direction)
 
 	if err := s.eventBus.Publish(ctx, event); err != nil {

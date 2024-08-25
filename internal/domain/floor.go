@@ -4,6 +4,11 @@ import (
 	"errors"
 )
 
+var (
+	ErrFloorNotFound = errors.New("floor not found")
+	ErrLiftNotFound  = errors.New("lift not found")
+)
+
 // Floor represents a floor in the lift system
 type Floor struct {
 	ID               string
