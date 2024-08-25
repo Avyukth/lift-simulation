@@ -27,19 +27,19 @@ func NewFloorService(repo ports.Repository, eventBus ports.EventBus, log *logger
 	}
 }
 
-func (s *FloorService) CallLift(ctx context.Context, floorNum int, direction domain.Direction) error {
+func (s *FloorService) CallLift(ctx context.Context, floorNum int, direction domain.Direction) (*domain.Lift, error) {
 	floor, err := s.repo.GetFloorByNumber(ctx, floorNum)
 	if err != nil {
 		if errors.Is(err, domain.ErrFloorNotFound) {
-			return domain.ErrFloorNotFound
+			return nil, domain.ErrFloorNotFound
 		}
-		return fmt.Errorf("failed to get floor %d: %w", floorNum, err)
+		return nil, fmt.Errorf("failed to get floor %d: %w", floorNum, err)
 	}
 
 	// Find an available lift, preferably on the ground floor
 	lift, err := s.findAvailableLift(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to find available lift: %w", err)
+		return nil, fmt.Errorf("failed to find available lift: %w", err)
 	}
 
 	// Start asynchronous process to move the lift
@@ -48,10 +48,10 @@ func (s *FloorService) CallLift(ctx context.Context, floorNum int, direction dom
 	// Publish an event about the lift call
 	event := domain.NewLiftCalledEvent(floor.ID, floorNum, direction)
 	if err := s.eventBus.Publish(ctx, event); err != nil {
-		return fmt.Errorf("failed to publish lift called event: %w", err)
+		return nil, fmt.Errorf("failed to publish lift called event: %w", err)
 	}
 
-	return nil
+	return lift, nil
 }
 
 func (s *FloorService) findAvailableLift(ctx context.Context) (*domain.Lift, error) {

@@ -55,7 +55,6 @@ func SetupRoutes(app *fiber.App, liftHandler *handlers.LiftHandler, floorHandler
 	// Lift routes
 	lifts := api.Group("/lifts")
 	lifts.Get("/", liftHandler.ListLifts)
-	// lifts.Post("/assign",  liftHandler.AssignLiftToFloor)
 	lifts.Get("/:id", liftHandler.GetLift)
 	lifts.Post("/:id/move", systemVerification.VerifyLiftMove(), liftHandler.MoveLift)
 	lifts.Put("/:id/status", liftHandler.SetLiftStatus)
