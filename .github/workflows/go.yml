@@ -29,9 +29,8 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-go-
 
-    - name: Get dependencies
-      run: |
-        go mod tidy
+    - name: Tidy modules
+      run: go mod tidy
 
     - name: Run tests
       run: go test -v ./...
