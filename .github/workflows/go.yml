@@ -31,7 +31,7 @@ jobs:
 
     - name: Get dependencies
       run: |
-        go mod download
+        go mod tidy
 
     - name: Run tests
       run: go test -v ./...
