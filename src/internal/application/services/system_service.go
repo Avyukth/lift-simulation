@@ -12,17 +12,15 @@ import (
 
 // SystemService handles the business logic for overall system operations
 type SystemService struct {
-	repo     ports.SystemRepository
-	eventBus ports.EventBus
-	log      *logger.Logger
+	repo ports.Repository
+	log  *logger.Logger
 }
 
 // NewSystemService creates a new instance of SystemService
-func NewSystemService(repo ports.SystemRepository, eventBus ports.EventBus, log *logger.Logger) *SystemService {
+func NewSystemService(repo ports.Repository, log *logger.Logger) *SystemService {
 	return &SystemService{
-		repo:     repo,
-		eventBus: eventBus,
-		log:      log,
+		repo: repo,
+		log:  log,
 	}
 }
 
@@ -74,13 +72,6 @@ func (s *SystemService) ConfigureSystem(ctx context.Context, floors, lifts int) 
 			return fmt.Errorf("failed to save lift %s: %w", liftName, err)
 		}
 		s.log.Debug(ctx, "Lift created", "lift_id", liftID, "lift_name", liftName)
-	}
-
-	// Publish an event about the system configuration
-	event := domain.NewSystemConfiguredEvent(systemID, floors, lifts)
-	if err := s.eventBus.Publish(ctx, event); err != nil {
-		s.log.Error(ctx, "Failed to publish system configured event", "error", err)
-		return fmt.Errorf("failed to publish system configured event: %w", err)
 	}
 
 	s.log.Info(ctx, "System configuration completed successfully",
@@ -157,21 +148,15 @@ func (s *SystemService) ResetSystem(ctx context.Context) error {
 	}
 
 	// Reset all floor buttons
-	// for i := 0; i < system.TotalFloors; i++ {
-	// 	floor, err := s.repo.GetFloorByNumber(ctx, i)
-	// 	if err != nil {
-	// 		return fmt.Errorf("failed to get floor %d: %w", i, err)
-	// 	}
-	// 	floor.ResetButtons()
-	// 	if err := s.repo.SaveFloor(ctx, floor); err != nil {
-	// 		return fmt.Errorf("failed to save reset floor %d: %w", i, err)
-	// 	}
-	// }
-
-	// Publish an event about the system reset
-	event := domain.NewSystemResetEvent(system.ID)
-	if err := s.eventBus.Publish(ctx, event); err != nil {
-		return fmt.Errorf("failed to publish system reset event: %w", err)
+	for i := 0; i < system.TotalFloors; i++ {
+		floor, err := s.repo.GetFloorByNumber(ctx, i)
+		if err != nil {
+			return fmt.Errorf("failed to get floor %d: %w", i, err)
+		}
+		floor.ResetButtons()
+		if err := s.repo.SaveFloor(ctx, floor); err != nil {
+			return fmt.Errorf("failed to save reset floor %d: %w", i, err)
+		}
 	}
 
 	return nil
@@ -203,18 +188,14 @@ func (s *SystemService) GetSystemMetrics(ctx context.Context) (map[string]interf
 
 // SimulateTraffic simulates traffic in the system based on the given intensity and duration
 func (s *SystemService) SimulateTraffic(ctx context.Context, duration int, intensity string) error {
-	system, err := s.repo.GetSystem(ctx)
+	_, err := s.repo.GetSystem(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get system: %w", err)
 	}
 
 	switch intensity {
 	case "low", "medium", "high":
-		// Simulate traffic based on intensity and duration
-		event := domain.NewTrafficSimulationEvent(system.ID, intensity, duration)
-		if err := s.eventBus.Publish(ctx, event); err != nil {
-			return fmt.Errorf("failed to publish traffic simulation event: %w", err)
-		}
+		// WIP
 		return nil
 	default:
 		return fmt.Errorf("invalid traffic intensity: %s", intensity)

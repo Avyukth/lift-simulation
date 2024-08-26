@@ -13,19 +13,17 @@ import (
 
 // LiftService handles the business logic for lift operations
 type LiftService struct {
-	repo     ports.LiftRepository
-	eventBus ports.EventBus
-	wsHub    *ws.WebSocketHub
-	log      *logger.Logger
+	repo  ports.LiftRepository
+	wsHub *ws.WebSocketHub
+	log   *logger.Logger
 }
 
 // NewLiftService creates a new instance of LiftService
-func NewLiftService(repo ports.LiftRepository, eventBus ports.EventBus, wsHub *ws.WebSocketHub, log *logger.Logger) *LiftService {
+func NewLiftService(repo ports.LiftRepository, wsHub *ws.WebSocketHub, log *logger.Logger) *LiftService {
 	return &LiftService{
-		repo:     repo,
-		eventBus: eventBus,
-		wsHub:    wsHub,
-		log:      log,
+		repo:  repo,
+		wsHub: wsHub,
+		log:   log,
 	}
 }
 
@@ -86,12 +84,6 @@ func (s *LiftService) AssignLiftToFloor(ctx context.Context, floorNum int, floor
 	}
 
 	if err := s.repo.UpdateLift(ctx, assignedLift); err != nil {
-		return nil, err
-	}
-
-	// Publish an event about the lift assignment
-	event := domain.NewLiftAssignedEvent(assignedLift.ID, floorId, floorNum)
-	if err := s.eventBus.Publish(ctx, event); err != nil {
 		return nil, err
 	}
 

@@ -17,7 +17,6 @@ import (
 
 	"github.com/Avyukth/lift-simulation/internal/application/services"
 	"github.com/Avyukth/lift-simulation/internal/config"
-	"github.com/Avyukth/lift-simulation/internal/infrastructure/eventbus"
 	"github.com/Avyukth/lift-simulation/internal/infrastructure/fiber/handlers"
 	"github.com/Avyukth/lift-simulation/internal/infrastructure/fiber/routes"
 	ws "github.com/Avyukth/lift-simulation/internal/infrastructure/fiber/websockets"
@@ -88,12 +87,6 @@ func run(ctx context.Context, log *logger.Logger, fiberLog *logger.FiberLogger) 
 	// Event Bus Support
 	log.Info(ctx, "startup", "status", "initializing event bus")
 
-	eventBus, err := eventbus.NewRedisPubSub(cfg.Redis.URL)
-	if err != nil {
-		return fmt.Errorf("connecting to Redis: %w", err)
-	}
-	defer eventBus.Close()
-
 	// -------------------------------------------------------------------------
 	// Initialize WebSocket hub
 
@@ -103,9 +96,9 @@ func run(ctx context.Context, log *logger.Logger, fiberLog *logger.FiberLogger) 
 	// -------------------------------------------------------------------------
 	// Initialize Services
 
-	liftService := services.NewLiftService(repo, eventBus, hub, log)
-	floorService := services.NewFloorService(repo, eventBus, log)
-	systemService := services.NewSystemService(repo, eventBus, log)
+	liftService := services.NewLiftService(repo, hub, log)
+	floorService := services.NewFloorService(repo, log)
+	systemService := services.NewSystemService(repo, log)
 
 	liftHandler := handlers.NewLiftHandler(liftService)
 	floorHandler := handlers.NewFloorHandler(floorService)

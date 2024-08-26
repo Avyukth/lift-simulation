@@ -13,17 +13,15 @@ import (
 
 // FloorService handles the business logic for floor operations
 type FloorService struct {
-	repo     ports.Repository
-	eventBus ports.EventBus
-	log      *logger.Logger // Dependency on LiftService for assigning lifts
+	repo ports.Repository
+	log  *logger.Logger
 }
 
 // NewFloorService creates a new instance of FloorService
-func NewFloorService(repo ports.Repository, eventBus ports.EventBus, log *logger.Logger) *FloorService {
+func NewFloorService(repo ports.Repository, log *logger.Logger) *FloorService {
 	return &FloorService{
-		repo:     repo,
-		eventBus: eventBus,
-		log:      log,
+		repo: repo,
+		log:  log,
 	}
 }
 
@@ -44,12 +42,6 @@ func (s *FloorService) CallLift(ctx context.Context, floorNum int, direction dom
 
 	// Start asynchronous process to move the lift
 	go s.moveLiftToFloor(context.Background(), lift, floor, direction)
-
-	// Publish an event about the lift call
-	event := domain.NewLiftCalledEvent(floor.ID, floorNum, direction)
-	if err := s.eventBus.Publish(ctx, event); err != nil {
-		return nil, fmt.Errorf("failed to publish lift called event: %w", err)
-	}
 
 	return lift, nil
 }
@@ -103,9 +95,6 @@ func (s *FloorService) moveLiftToFloor(ctx context.Context, lift *domain.Lift, t
 	lift.SetAvailable()
 	s.repo.UpdateLift(ctx, lift)
 
-	// Publish event that lift has arrived
-	event := domain.NewLiftArrivedEvent(lift.ID, targetFloor.ID, targetFloor.Number)
-	s.eventBus.Publish(ctx, event)
 }
 
 // GetFloorStatus retrieves the current status of a floor
@@ -137,12 +126,6 @@ func (s *FloorService) ResetFloorButtons(ctx context.Context, floorNum int) erro
 
 	if err := s.repo.UpdateFloor(ctx, floor); err != nil {
 		return fmt.Errorf("failed to update floor %d: %w", floorNum, err)
-	}
-
-	// Publish an event about the floor buttons being reset
-	event := domain.NewFloorButtonsResetEvent(floor.ID, floorNum)
-	if err := s.eventBus.Publish(ctx, event); err != nil {
-		return fmt.Errorf("failed to publish floor buttons reset event: %w", err)
 	}
 
 	return nil
