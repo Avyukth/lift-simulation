@@ -5,9 +5,9 @@ SHELL = $(if $(wildcard $(SHELL_PATH)),/bin/ash,/bin/bash)
 # Define variables
 GOLANG          := golang:1.23
 ALPINE          := alpine:3.20
-LS_APP          := ls
+LS_APP          := lift-sim
 VERSION         := 0.0.1
-BASE_IMAGE_NAME := localhost/ls
+BASE_IMAGE_NAME := localhost
 LS_IMAGE        := $(BASE_IMAGE_NAME)/$(LS_APP):$(VERSION)
 
 # Docker Compose settings
