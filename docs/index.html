@@ -12,16 +12,17 @@
   <body>
     <div id="swagger-ui"></div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.11.1/swagger-ui-bundle.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.11.1/swagger-ui-standalone-preset.js"></script>
     <script>
       window.onload = function () {
         const ui = SwaggerUIBundle({
-          url: "../src/docs/swagger.json", <!-- Update the URL path -->
+          url: "../src/docs/swagger.json",  <!-- Ensure the URL path is correct -->
           dom_id: "#swagger-ui",
           presets: [
             SwaggerUIBundle.presets.apis,
-            SwaggerUIBundle.SwaggerUIStandalonePreset,
+            SwaggerUIStandalonePreset  <!-- Use SwaggerUIStandalonePreset -->
           ],
-          layout: "StandaloneLayout",
+          layout: "StandaloneLayout"  <!-- Ensure this layout is defined in the preset -->
         });
         window.ui = ui;
       };
