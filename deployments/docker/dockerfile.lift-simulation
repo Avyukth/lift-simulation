@@ -9,6 +9,7 @@ RUN apk add --no-cache git gcc musl-dev
 COPY src/ .
 
 # Download dependencies
+RUN go mod tidy
 RUN go mod download
 
 # Build arguments
@@ -31,6 +32,8 @@ RUN addgroup -g 1000 -S lsgroup && \
 # Set working directory
 WORKDIR /app
 
+# Create database directory
+RUN mkdir -p /app/db && chown -R lsuser:lsgroup /app/db
 # Copy the binary from builder
 COPY --from=builder --chown=lsuser:lsgroup /app/lift-simulation .
 

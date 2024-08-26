@@ -8,13 +8,13 @@ The Lift Simulation System is a comprehensive solution designed to simulate and 
 
 ### UML Class Diagram
 
-<img src="/api/placeholder/800/600" alt="UML Class Diagram placeholder" />
+<img src="./artifacts/uml-dig.png" alt="UML Class Diagram " />
 
 The UML diagram above illustrates the core classes and their relationships in the Lift Simulation System.
 
 ### Entity-Relationship Diagram
 
-<img src="/api/placeholder/800/600" alt="ER Diagram placeholder" />
+<img src="./artifacts/er-dig.png" alt="ER Diagram" />
 
 The ER diagram provides a visual representation of the data model used in the Lift Simulation System.
 
@@ -40,22 +40,35 @@ The ER diagram provides a visual representation of the data model used in the Li
 
 1. Clone the repository:
 
-   ```
+---
+
+```
    git clone https://github.com/yourusername/lift-simulation.git
    cd lift-simulation
-   ```
+```
+
+---
 
 2. Set up environment variables:
    Copy the sample .env file and modify as needed:
 
-   ```
+---
+
+```
    cp src/.env.example src/.env
-   ```
+```
+
+---
 
 3. Build and run the system using the provided Makefile:
-   ```
+
+---
+
+```
    make up
-   ```
+```
+
+---
 
 ## Usage
 
@@ -73,9 +86,13 @@ The project includes a Makefile to simplify common tasks. Here are the available
 
 To see all available commands, run:
 
+---
+
 ```
 make help
 ```
+
+---
 
 ### API Endpoints
 
@@ -95,13 +112,21 @@ To set up the development environment:
 
 1. Install Go 1.23 or later
 2. Install project dependencies:
-   ```
-   go mod download
-   ```
-3. Run tests:
-   ```
-   make test
-   ```
+
+---
+
+```
+make build
+make up
+```
+
+---
+
+Go to
+
+`http://localhost:4000/swagger`
+
+To see the system API details.
 
 ## Project Structure
 

@@ -55,6 +55,13 @@ func run(ctx context.Context, log *logger.Logger, fiberLog *logger.FiberLogger) 
 	// runtime.GOMAXPROCS(maxProcs)
 
 	log.Info(ctx, "startup", "GOMAXPROCS", runtime.GOMAXPROCS(0))
+	// Log current working directory
+	cwd, err := os.Getwd()
+	if err != nil {
+		log.Error(ctx, "getting current working directory==========================================", "error", err)
+	} else {
+		log.Info(ctx, "current working directory==========================================", "path", cwd)
+	}
 
 	// -------------------------------------------------------------------------
 	// Configuration
