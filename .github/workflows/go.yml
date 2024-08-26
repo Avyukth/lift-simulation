@@ -11,6 +11,9 @@ jobs:
   build:
     name: Build and Test
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./src
     steps:
 
     - name: Set up Go
@@ -49,12 +52,16 @@ jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./src
     steps:
       - uses: actions/checkout@v2
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v2
         with:
           version: latest
+          working-directory: src
 
   docker:
     name: Build and Push Docker Image
