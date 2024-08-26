@@ -75,6 +75,7 @@ func SetupRoutes(config config.RouteConfig) {
 	floors.Post("/:floorNum/reset", floorHandler.ResetFloorButtons)
 
 	// WebSocket route for real-time updates
+	// WIP  websocket for emergency call and lift status
 	app.Get("/ws", ws.WebSocketHandler)
 	app.Get("/ws/connect", ws.WebSocketUpgradeHandler(hub))
 

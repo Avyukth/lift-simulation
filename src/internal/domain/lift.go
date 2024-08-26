@@ -49,20 +49,26 @@ func NewLift(id, name string) *Lift {
 	}
 }
 
-func (l *Lift) SetCurrentFloor(floor int) {
-	l.CurrentFloor = floor
+func (l *Lift) AddPassengers(count int) error {
+	if l.Passengers+count > l.Capacity {
+		return errors.New("exceeds lift capacity")
+	}
+	l.Passengers += count
+	return nil
+}
+
+func (l *Lift) AssignToFloor(floor int) error {
+	l.TargetFloor = floor
+	l.Status = Occupied
+	return nil
+}
+
+func (l *Lift) GetLastMoveTime() time.Time {
+	return l.LastMoveTime
 }
 
 func (l *Lift) IsAvailable() bool {
 	return l.Status == Available
-}
-
-func (l *Lift) SetStatus(status LiftStatus) {
-	l.Status = status
-}
-
-func (l *Lift) SetCapacity(capacity int) {
-	l.Capacity = capacity
 }
 
 func (l *Lift) MoveTo(floor int) error {
@@ -89,44 +95,11 @@ func (l *Lift) MoveTo(floor int) error {
 	return nil
 }
 
-func (l *Lift) AddPassengers(count int) error {
-	if l.Passengers+count > l.Capacity {
-		return errors.New("exceeds lift capacity")
-	}
-	l.Passengers += count
-	return nil
-}
-
 func (l *Lift) RemovePassengers(count int) error {
 	if l.Passengers-count < 0 {
 		return errors.New("invalid passenger count")
 	}
 	l.Passengers -= count
-	return nil
-}
-
-func (l *Lift) SetOutOfService() {
-	l.Status = OutOfService
-}
-
-func (l *Lift) SetAvailable() {
-	l.Status = Available
-}
-
-func (l *Lift) GetLastMoveTime() time.Time {
-	return l.LastMoveTime
-}
-
-func abs(x int) int {
-	if x < 0 {
-		return -x
-	}
-	return x
-}
-
-func (l *Lift) AssignToFloor(floor int) error {
-	l.TargetFloor = floor
-	l.Status = Occupied
 	return nil
 }
 
@@ -136,6 +109,39 @@ func (l *Lift) Reset() {
 	l.Direction = Idle
 	l.Status = Available
 	l.Passengers = 0
+}
+
+func (l *Lift) SetAvailable() {
+	l.Status = Available
+}
+
+func (l *Lift) SetCapacity(capacity int) {
+	l.Capacity = capacity
+}
+
+func (l *Lift) SetCurrentFloor(floor int) {
+	l.CurrentFloor = floor
+}
+
+func (l *Lift) SetOutOfService() {
+	l.Status = OutOfService
+}
+
+func (l *Lift) SetStatus(status LiftStatus) {
+	l.Status = status
+}
+
+func LiftStatusToString(status LiftStatus) string {
+	switch status {
+	case Available:
+		return "Available"
+	case Occupied:
+		return "Occupied"
+	case OutOfService:
+		return "OutOfService"
+	default:
+		return "Unknown"
+	}
 }
 
 func StringToLiftStatus(status string) LiftStatus {
@@ -151,15 +157,9 @@ func StringToLiftStatus(status string) LiftStatus {
 	}
 }
 
-func LiftStatusToString(status LiftStatus) string {
-	switch status {
-	case Available:
-		return "Available"
-	case Occupied:
-		return "Occupied"
-	case OutOfService:
-		return "OutOfService"
-	default:
-		return "Unknown"
+func abs(x int) int {
+	if x < 0 {
+		return -x
 	}
+	return x
 }
