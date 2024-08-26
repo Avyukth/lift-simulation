@@ -43,7 +43,7 @@ The ER diagram provides a visual representation of the data model used in the Li
 ---
 
 ```
-   git clone https://github.com/yourusername/lift-simulation.git
+   git clone git@github.com:Avyukth/lift-simulation.git
    cd lift-simulation
 ```
 
