@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"math"
 
 	"github.com/Avyukth/lift-simulation/internal/application/ports"
 	"github.com/Avyukth/lift-simulation/internal/domain"
@@ -32,8 +33,9 @@ func (s *SystemService) ConfigureSystem(ctx context.Context, floors, lifts int) 
 	if lifts < 1 {
 		return fmt.Errorf("invalid number of lifts: must be at least 1")
 	}
-	if lifts > floors {
-		return fmt.Errorf("invalid number of lifts: must be less than number of floors")
+	maxLifts := int(math.Ceil(float64(floors) * 0.75))
+	if lifts > maxLifts {
+		return fmt.Errorf("invalid number of lifts: must be less than or equal to %.0f%% of the number of floors (maximum %d lifts for %d floors)", 75.0, maxLifts, floors)
 	}
 	s.log.Info(ctx, "Configuring system", "total_floors", floors, "total_lifts", lifts)
 

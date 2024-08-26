@@ -13,9 +13,17 @@ LS_IMAGE        := $(BASE_IMAGE_NAME)/$(LS_APP):$(VERSION)
 # Docker Compose settings
 DOCKER_COMPOSE  := docker compose
 DC_FILE         := deployments/docker-compose.yaml
-ENV_FILE        := ./src/.env
-BUILD_DATE := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
+ENV_FILE        := ./src/.env.development
+BUILD_DATE      := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 BUILD_REF       := $(VERSION)
+
+# Determine the environment
+ENV ?= development
+ifeq ($(ENV),production)
+    ENV_FILE := ./src/.env.production
+else ifeq ($(ENV),ci)
+    ENV_FILE := ./src/.env.ci
+endif
 
 # Load environment variables from .env file
 include $(ENV_FILE)
@@ -34,6 +42,7 @@ lift-simulation:
 		-t $(LS_IMAGE) \
 		--build-arg BUILD_REF=$(VERSION) \
 		--build-arg BUILD_DATE=$(BUILD_DATE) \
+		--build-arg ENV=$(ENV) \
 		.
 
 # ==============================================================================
@@ -42,7 +51,7 @@ lift-simulation:
 .PHONY: up
 up:
 	export BASE_IMAGE_NAME=$(BASE_IMAGE_NAME) LS_APP=$(LS_APP) VERSION=$(VERSION) BUILD_DATE=$(BUILD_DATE) && \
-	$(DOCKER_COMPOSE) -f $(DC_FILE) up
+	$(DOCKER_COMPOSE) -f $(DC_FILE) --env-file $(ENV_FILE) up
 
 .PHONY: down
 down:
@@ -53,11 +62,18 @@ logs:
 	$(DOCKER_COMPOSE) -f $(DC_FILE) logs -f
 
 # ==============================================================================
+# Running the application
+
+.PHONY: run
+run:
+	GO_ENV=$(ENV) go run ./src/cmd/api/main.go
+
+# ==============================================================================
 # Testing
 
 .PHONY: test
 test:
-	go test ./src/... -v
+	GO_ENV=$(ENV) go test ./src/... -v
 
 # ==============================================================================
 # Cleaning up
@@ -78,8 +94,12 @@ help:
 	@echo "  up               : Build and start the containers using Docker Compose"
 	@echo "  down             : Stop and remove the containers"
 	@echo "  logs             : View container logs"
+	@echo "  run              : Run the application locally"
 	@echo "  test             : Run the Go tests"
 	@echo "  clean            : Remove containers, volumes, and images"
+	@echo ""
+	@echo "Use ENV=<environment> to specify the environment (development, production, ci)"
+	@echo "Example: make up ENV=production"
 
 # ==============================================================================
 # Default

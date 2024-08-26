@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/Avyukth/lift-simulation/internal/application/ports"
@@ -74,6 +75,13 @@ func LoadConfig(build string) (Config, error) {
 		},
 	}
 
+	env := os.Getenv("GO_ENV")
+	if env == "" {
+		env = "development"
+	}
+
+	viper.SetConfigFile(fmt.Sprintf("src/.env.%s", env))
+	viper.AutomaticEnv()
 	// Load .env file
 	viper.SetConfigFile(".env")
 	if err := viper.ReadInConfig(); err != nil {
