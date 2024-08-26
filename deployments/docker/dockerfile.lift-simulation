@@ -15,6 +15,7 @@ RUN go mod download
 # Build arguments
 ARG BUILD_REF
 ARG BUILD_DATE
+ARG ENV=development
 
 # Build the application
 RUN CGO_ENABLED=1 GOOS=linux go build -ldflags "-X main.build=${BUILD_REF}" -o lift-simulation ./cmd/api
@@ -34,16 +35,21 @@ WORKDIR /app
 
 # Create database directory
 RUN mkdir -p /app/db && chown -R lsuser:lsgroup /app/db
+
 # Copy the binary from builder
 COPY --from=builder --chown=lsuser:lsgroup /app/lift-simulation .
 
-# Copy the .env file
-COPY --chown=lsuser:lsgroup src/.env .
+# Copy the appropriate .env file based on the ENV argument
+ARG ENV=development
+COPY --chown=lsuser:lsgroup src/.env.${ENV} .env
 
 # Switch to non-root user
 USER lsuser
 
+ENV GO_ENV=${ENV}
+
 CMD ["./lift-simulation"]
+
 # Metadata
 LABEL org.opencontainers.image.created="${BUILD_DATE}" \
     org.opencontainers.image.title="lift-simulation" \
