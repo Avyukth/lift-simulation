@@ -1,79 +1,126 @@
+# Lift Simulation System
 
-# Lift Simulation: Conceptual Guide for API and Deployment
+## Overview
 
-## 1. Core API Endpoints
+The Lift Simulation System is a comprehensive solution designed to simulate and manage elevator operations in a multi-story building. This system provides a robust API for configuring, monitoring, and controlling lifts, making it ideal for testing elevator algorithms, building management systems, or educational purposes.
 
-### 1.1 System Configuration
-- Configure System: POST endpoint to set up the number of floors and lifts
-- Retrieve Configuration: GET endpoint to fetch current system configuration
+## System Architecture
 
-### 1.2 Lift Operations
-- List Lifts: GET endpoint to retrieve all lifts and their current states
-- Move Lift: POST endpoint to move a specific lift to a target floor
+### UML Class Diagram
 
-### 1.3 Floor Operations
-- Call Lift: POST endpoint to request a lift to a specific floor
+<img src="/api/placeholder/800/600" alt="UML Class Diagram placeholder" />
 
-### 1.4 Real-time Updates
-- WebSocket Connection: Endpoint for real-time updates on lift movements and status changes
+The UML diagram above illustrates the core classes and their relationships in the Lift Simulation System.
 
-## 2. Core Functionality Concepts
+### Entity-Relationship Diagram
 
-### 2.1 Lift Movement Logic
-- Implement a basic algorithm for assigning the nearest available lift to a floor call
-- Manage lift movements between floors, including status updates
-- Simulate realistic lift movement timing
+<img src="/api/placeholder/800/600" alt="ER Diagram placeholder" />
 
-### 2.2 Real-time Updates
-- Use WebSocket to broadcast lift movements and status changes to connected clients
-- Ensure efficient message formatting for real-time communication
+The ER diagram provides a visual representation of the data model used in the Lift Simulation System.
 
-### 2.3 Concurrency Handling
-- Implement appropriate concurrency control mechanisms for managing simultaneous lift operations
-- Consider using locks or optimistic concurrency control methods
+## Key Features
 
-## 3. Deployment Strategy
+- Dynamic system configuration (number of floors and lifts)
+- Real-time lift status monitoring
+- Intelligent lift assignment algorithm
+- Simulated lift movement and door operations
+- RESTful API for easy integration
+- WebSocket support for real-time updates
 
-### 3.1 Containerization with Docker
-- Create a Dockerfile to define the application environment
-- Include all necessary dependencies and configurations
-- Build and push the Docker image to a container registry
+## Getting Started
 
-### 3.2 Orchestration with Kubernetes
-- Create Kubernetes Deployment configuration:
-  - Specify the number of replicas
-  - Define container specifications including image and port
-  - Set up environment variables for configuration
-- Create Kubernetes Service configuration:
-  - Define how to expose the application (e.g., LoadBalancer type)
-  - Specify port mappings
+### Prerequisites
 
-### 3.3 Deployment Process
-1. Apply Kubernetes configurations using kubectl
-2. Verify the deployment status
-3. Implement scaling strategies as needed
+- Docker
+- Docker Compose
+- Go 1.23 or later (for local development)
+- Make (for using the provided Makefile)
 
-### 3.4 Monitoring and Logging
-- Utilize Kubernetes built-in monitoring tools
-- Implement application logging to stdout/stderr for easy collection by Kubernetes
+### Installation
 
-## 4. Testing Strategies
+1. Clone the repository:
 
-### 4.1 API Testing
-- Use API testing tools to verify endpoint functionality
-- Test various scenarios including edge cases
+   ```
+   git clone https://github.com/yourusername/lift-simulation.git
+   cd lift-simulation
+   ```
 
-### 4.2 Load Testing
-- Implement load tests to simulate multiple concurrent users
-- Verify system performance under expected and peak loads
+2. Set up environment variables:
+   Copy the sample .env file and modify as needed:
 
-## 5. Future Enhancements
+   ```
+   cp src/.env.example src/.env
+   ```
 
-1. Advanced Lift Scheduling: Implement more sophisticated algorithms for lift assignment and movement
-2. Security: Add authentication and authorization to API endpoints
-3. Persistence: Implement persistent storage for system state and historical data
-4. CI/CD: Set up automated pipelines for testing and deployment
-5. Analytics: Develop features for system performance analysis and optimization
+3. Build and run the system using the provided Makefile:
+   ```
+   make up
+   ```
 
-This conceptual guide provides an overview of the key components and considerations for implementing the Lift Simulation system. It covers the essential API design, core functionality concepts, deployment strategy, testing approaches, and potential future enhancements. Use this as a high-level roadmap for developing and deploying your Lift Simulation application.
+## Usage
 
+### Using the Makefile
+
+The project includes a Makefile to simplify common tasks. Here are the available commands:
+
+- `make build`: Build the lift-simulation Docker image
+- `make lift-simulation`: Build only the lift-simulation Docker image
+- `make up`: Build and start the containers using Docker Compose
+- `make down`: Stop and remove the containers
+- `make logs`: View container logs
+- `make test`: Run the Go tests
+- `make clean`: Remove containers, volumes, and images
+
+To see all available commands, run:
+
+```
+make help
+```
+
+### API Endpoints
+
+Once the system is up and running, you can interact with it using the following API endpoints:
+
+- Configure the system: `POST /api/v1/system/configure`
+- Get system status: `GET /api/v1/system/status`
+- Call a lift: `POST /api/v1/floors/{floorNum}/call`
+- Move a lift: `POST /api/v1/lifts/{liftId}/move`
+- Get lift status: `GET /api/v1/lifts/{liftId}`
+
+For a complete list of endpoints and their usage, refer to the API documentation.
+
+## Development
+
+To set up the development environment:
+
+1. Install Go 1.23 or later
+2. Install project dependencies:
+   ```
+   go mod download
+   ```
+3. Run tests:
+   ```
+   make test
+   ```
+
+## Project Structure
+
+- `src/`: Contains the Go source code
+- `deployments/`: Contains Docker and deployment-related files
+- `Makefile`: Defines commands for building, running, and managing the project
+- `docker-compose.yml`: Defines the multi-container Docker environment
+
+## Contributing
+
+We welcome contributions to the Lift Simulation System! Please read our contributing guidelines before submitting pull requests.
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Acknowledgments
+
+- Thanks to all contributors who have helped shape this project
+- Inspired by real-world elevator systems and simulation techniques
+
+For more information, please contact the project maintainers.

@@ -11,10 +11,11 @@ BASE_IMAGE_NAME := localhost
 LS_IMAGE        := $(BASE_IMAGE_NAME)/$(LS_APP):$(VERSION)
 
 # Docker Compose settings
-DOCKER_COMPOSE  := docker-compose
-DC_FILE         := deployments/docker-compose.yml
+DOCKER_COMPOSE  := docker compose
+DC_FILE         := deployments/docker-compose.yaml
 ENV_FILE        := ./src/.env
 BUILD_DATE := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
+BUILD_REF       := $(VERSION)
 
 # Load environment variables from .env file
 include $(ENV_FILE)
@@ -40,7 +41,8 @@ lift-simulation:
 
 .PHONY: up
 up:
-	$(DOCKER_COMPOSE) -f $(DC_FILE) up -d --build
+	export BASE_IMAGE_NAME=$(BASE_IMAGE_NAME) LS_APP=$(LS_APP) VERSION=$(VERSION) BUILD_DATE=$(BUILD_DATE) && \
+	$(DOCKER_COMPOSE) -f $(DC_FILE) up
 
 .PHONY: down
 down:

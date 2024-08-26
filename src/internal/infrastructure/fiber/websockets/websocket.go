@@ -1,11 +1,9 @@
 package websockets
 
 import (
-	"encoding/json"
 	"log"
 	"sync"
 
-	"github.com/Avyukth/lift-simulation/internal/domain"
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
 )
@@ -78,14 +76,14 @@ func (h *WebSocketHub) Run() {
 }
 
 // BroadcastUpdate sends an update to all connected WebSocket clients
-func (h *WebSocketHub) BroadcastUpdate(event domain.Event) {
-	data, err := json.Marshal(event)
-	if err != nil {
-		log.Printf("error marshaling event: %v", err)
-		return
-	}
-	h.Broadcast <- data
-}
+// func (h *WebSocketHub) BroadcastUpdate(event domain.Event) {
+// 	data, err := json.Marshal(event)
+// 	if err != nil {
+// 		log.Printf("error marshaling event: %v", err)
+// 		return
+// 	}
+// 	h.Broadcast <- data
+// }
 
 // WebSocketUpgradeHandler handles the WebSocket upgrade
 func WebSocketUpgradeHandler(hub *WebSocketHub) fiber.Handler {
