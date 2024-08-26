@@ -8,6 +8,15 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/3.1.0/swagger-ui.css"
     />
+    <style>
+      body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+      }
+      #swagger-ui {
+        margin: 20px;
+      }
+    </style>
   </head>
   <body>
     <div id="swagger-ui"></div>
@@ -16,8 +25,9 @@
     <script>
       window.onload = function () {
         const ui = SwaggerUIBundle({
-          url: "swagger.json", <!-- Ensure the URL path is correct -->
+          url: "../src/docs/swagger.json", <!-- Update this path if necessary -->
           dom_id: "#swagger-ui",
+          deepLinking: true,
           presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset],
           layout: "StandaloneLayout",
         });
