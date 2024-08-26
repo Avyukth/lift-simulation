@@ -90,24 +90,22 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/3.1.0/swagger-ui-standalone-preset.js"></script>
     <script>
       window.onload = function () {
-        const config = {
+        const ui = SwaggerUIBundle({
           url: "swagger.json",
-          layout: "StandaloneLayout",
+          dom_id: "#swagger-ui",
           deepLinking: true,
+          presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset],
+          plugins: [SwaggerUIBundle.plugins.DownloadUrl],
+          layout: "StandaloneLayout",
           defaultModelRendering: "example",
           docExpansion: "list",
           showMutatedRequest: false,
-          dom_id: "#swagger-ui",
-          plugins: [SwaggerUIBundle.plugins.DownloadUrl],
-          presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset],
           filter: false,
           syntaxHighlight: {
             activate: true,
             theme: "agate",
           },
-        };
-
-        const ui = SwaggerUIBundle(config);
+        });
 
         window.ui = ui;
       };
