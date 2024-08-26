@@ -18,6 +18,10 @@ The UML diagram above illustrates the core classes and their relationships in th
 
 The ER diagram provides a visual representation of the data model used in the Lift Simulation System.
 
+## Swagger UI reference
+
+https://api.subhrajit.me
+
 ## Key Features
 
 - Dynamic system configuration (number of floors and lifts)
