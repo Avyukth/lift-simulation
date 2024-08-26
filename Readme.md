@@ -52,7 +52,7 @@ NB : The system is still under development. #WIP - Work In Progress
 ---
 
 2. Set up environment variables:
-   Copy the sample .env file and modify as needed:
+   Copy the sample .env.example file as described below and modify as needed:
 
 ---
 
