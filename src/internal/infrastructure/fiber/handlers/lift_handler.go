@@ -71,6 +71,31 @@ func (h *LiftHandler) MoveLift(c *fiber.Ctx) error {
 	return c.SendStatus(fiber.StatusAccepted)
 }
 
+// SetLiftStatus handles PUT requests to set a lift's status
+func (h *LiftHandler) SetLiftStatus(c *fiber.Ctx) error {
+	liftID := c.Params("id")
+
+	var request struct {
+		Status domain.LiftStatus `json:"status"`
+	}
+
+	if err := c.BodyParser(&request); err != nil {
+		fmt.Println("Failed to parse request body", err)
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid request body",
+		})
+	}
+
+	err := h.liftService.SetLiftStatus(c.Context(), liftID, request.Status)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to set lift status",
+		})
+	}
+
+	return c.SendStatus(fiber.StatusOK)
+}
+
 // AssignLiftToFloor handles POST requests to assign a lift to a floor
 // func (h *LiftHandler) AssignLiftToFloor(c *fiber.Ctx) error {
 // 	floorNum, err := c.ParamsInt("floorNum")
@@ -100,28 +125,3 @@ func (h *LiftHandler) MoveLift(c *fiber.Ctx) error {
 
 // 	return c.JSON(lift)
 // }
-
-// SetLiftStatus handles PUT requests to set a lift's status
-func (h *LiftHandler) SetLiftStatus(c *fiber.Ctx) error {
-	liftID := c.Params("id")
-
-	var request struct {
-		Status domain.LiftStatus `json:"status"`
-	}
-
-	if err := c.BodyParser(&request); err != nil {
-		fmt.Println("Failed to parse request body", err)
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid request body",
-		})
-	}
-
-	err := h.liftService.SetLiftStatus(c.Context(), liftID, request.Status)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to set lift status",
-		})
-	}
-
-	return c.SendStatus(fiber.StatusOK)
-}

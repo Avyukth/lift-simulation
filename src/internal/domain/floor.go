@@ -93,34 +93,6 @@ func (f *Floor) ResetButtons() {
 	f.DownButtonActive = false
 }
 
-func NewFloorButtonsResetEvent(floorID string, floorNum int) Event {
-	return Event{
-		Type: FloorButtonsReset,
-		Payload: struct {
-			FloorID     string
-			FloorNumber int
-		}{
-			FloorID:     floorID,
-			FloorNumber: floorNum,
-		},
-	}
-}
-
-func NewLiftAssignedEvent(liftID string, floorID string, floorNum int) Event {
-	return Event{
-		Type: LiftAssigned,
-		Payload: struct {
-			LiftID      string
-			FloorID     string
-			FloorNumber int
-		}{
-			LiftID:      liftID,
-			FloorID:     floorID,
-			FloorNumber: floorNum,
-		},
-	}
-}
-
 // SetNumber sets the floor number
 func (f *Floor) SetNumber(number int) {
 	f.Number = number

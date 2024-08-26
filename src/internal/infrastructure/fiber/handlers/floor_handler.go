@@ -21,6 +21,18 @@ func NewFloorHandler(floorService *services.FloorService) *FloorHandler {
 	}
 }
 
+// ListFloors handles GET requests to list all floors
+func (h *FloorHandler) ListFloors(c *fiber.Ctx) error {
+	floors, err := h.floorService.ListFloors(c.Context())
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to retrieve floors",
+		})
+	}
+
+	return c.JSON(floors)
+}
+
 // GetFloorStatus handles GET requests to retrieve the status of a specific floor
 func (h *FloorHandler) GetFloorStatus(c *fiber.Ctx) error {
 	floorNum, err := c.ParamsInt("floorNum")
@@ -38,18 +50,6 @@ func (h *FloorHandler) GetFloorStatus(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(floor)
-}
-
-// ListFloors handles GET requests to list all floors
-func (h *FloorHandler) ListFloors(c *fiber.Ctx) error {
-	floors, err := h.floorService.ListFloors(c.Context())
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to retrieve floors",
-		})
-	}
-
-	return c.JSON(floors)
 }
 
 // CallLift handles POST requests to call a lift to a specific floor
@@ -89,7 +89,6 @@ func (h *FloorHandler) CallLift(c *fiber.Ctx) error {
 		"message": fmt.Sprintf("Lift call accepted. Lift %s is on its way.", lift.Name),
 		"lift":    lift.Name,
 	})
-
 }
 
 // ResetFloorButtons handles POST requests to reset the call buttons on a floor
