@@ -1,0 +1,547 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Lift Simulation API",
+    "version": "1.0.0",
+    "description": "API for managing a lift simulation system"
+  },
+  "servers": [
+    {
+      "url": "https://api.subhrajit.me/projects/lift-simulation/v1",
+      "description": "Production server"
+    },
+    {
+      "url": "http://localhost:4000/api/v1",
+      "description": "Local development server"
+    }
+  ],
+  "paths": {
+    "/system/configure": {
+      "post": {
+        "summary": "Configure the lift system",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SystemConfig"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "System configured successfully"
+          },
+          "500": {
+            "description": "Failed to configure system"
+          }
+        }
+      }
+    },
+    "/system/configuration": {
+      "get": {
+        "summary": "Retrieve current system configuration",
+        "responses": {
+          "200": {
+            "description": "Current system configuration",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemConfig"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Failed to get system configuration"
+          }
+        }
+      }
+    },
+    "/system/status": {
+      "get": {
+        "summary": "Retrieve overall system status",
+        "responses": {
+          "200": {
+            "description": "Overall system status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemStatus"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Failed to retrieve system status"
+          }
+        }
+      }
+    },
+    "/system/reset": {
+      "post": {
+        "summary": "Reset the entire lift system",
+        "responses": {
+          "200": {
+            "description": "System reset successfully"
+          },
+          "500": {
+            "description": "Failed to reset system"
+          }
+        }
+      }
+    },
+    "/system/metrics": {
+      "get": {
+        "summary": "Retrieve system performance metrics",
+        "responses": {
+          "200": {
+            "description": "System performance metrics",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemMetrics"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Failed to retrieve system metrics"
+          }
+        }
+      }
+    },
+    "/system/simulate-traffic": {
+      "post": {
+        "summary": "Simulate lift traffic in the system",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TrafficSimulation"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Traffic simulation started"
+          },
+          "500": {
+            "description": "Failed to simulate traffic"
+          }
+        }
+      }
+    },
+    "/lifts": {
+      "get": {
+        "summary": "List all lifts and their current states",
+        "responses": {
+          "200": {
+            "description": "List of all lifts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Lift"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Failed to retrieve lifts"
+          }
+        }
+      }
+    },
+    "/lifts/{liftId}": {
+      "get": {
+        "summary": "Get status of a specific lift",
+        "parameters": [
+          {
+            "name": "liftId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lift status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Lift"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Lift not found"
+          }
+        }
+      }
+    },
+    "/lifts/{liftId}/move": {
+      "post": {
+        "summary": "Move a specific lift to a target floor",
+        "parameters": [
+          {
+            "name": "liftId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Move request accepted"
+          },
+          "500": {
+            "description": "Failed to move lift"
+          }
+        }
+      }
+    },
+    "/lifts/{liftId}/status": {
+      "put": {
+        "summary": "Set the status of a specific lift",
+        "parameters": [
+          {
+            "name": "liftId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LiftStatusUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Lift status updated successfully"
+          },
+          "500": {
+            "description": "Failed to set lift status"
+          }
+        }
+      }
+    },
+    "/floors": {
+      "get": {
+        "summary": "List all floors",
+        "responses": {
+          "200": {
+            "description": "List of all floors",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Floor"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Failed to retrieve floors"
+          }
+        }
+      }
+    },
+    "/floors/active-calls": {
+      "get": {
+        "summary": "Get all active floor calls",
+        "responses": {
+          "200": {
+            "description": "List of active floor calls",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FloorCall"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Failed to retrieve active floor calls"
+          }
+        }
+      }
+    },
+    "/floors/{floorNum}": {
+      "get": {
+        "summary": "Get status of a specific floor",
+        "parameters": [
+          {
+            "name": "floorNum",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Floor status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Floor"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Floor not found"
+          }
+        }
+      }
+    },
+    "/floors/{floorNum}/call": {
+      "post": {
+        "summary": "Call a lift to a specific floor",
+        "parameters": [
+          {
+            "name": "floorNum",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CallRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Call request accepted"
+          },
+          "404": {
+            "description": "Floor not found"
+          },
+          "500": {
+            "description": "Failed to call lift"
+          }
+        }
+      }
+    },
+    "/floors/{floorNum}/reset": {
+      "post": {
+        "summary": "Reset the call buttons on a specific floor",
+        "parameters": [
+          {
+            "name": "floorNum",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Floor buttons reset successfully"
+          },
+          "500": {
+            "description": "Failed to reset floor buttons"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "SystemConfig": {
+        "type": "object",
+        "properties": {
+          "floors": {
+            "type": "integer",
+            "minimum": 2
+          },
+          "lifts": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": ["floors", "lifts"]
+      },
+      "SystemStatus": {
+        "type": "object",
+        "properties": {
+          "totalFloors": {
+            "type": "integer"
+          },
+          "totalLifts": {
+            "type": "integer"
+          },
+          "activeLifts": {
+            "type": "integer"
+          },
+          "pendingCalls": {
+            "type": "integer"
+          }
+        }
+      },
+      "SystemMetrics": {
+        "type": "object",
+        "properties": {
+          "averageWaitTime": {
+            "type": "number"
+          },
+          "totalTrips": {
+            "type": "integer"
+          },
+          "busyHours": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "TrafficSimulation": {
+        "type": "object",
+        "properties": {
+          "duration": {
+            "type": "integer"
+          },
+          "intensity": {
+            "type": "string",
+            "enum": ["LOW", "MEDIUM", "HIGH"]
+          }
+        },
+        "required": ["duration", "intensity"]
+      },
+      "Lift": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "currentFloor": {
+            "type": "integer"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "IDLE",
+              "MOVING_UP",
+              "MOVING_DOWN",
+              "DOOR_OPENING",
+              "DOOR_CLOSING"
+            ]
+          }
+        },
+        "required": ["id", "currentFloor", "status"]
+      },
+      "MoveRequest": {
+        "type": "object",
+        "properties": {
+          "targetFloor": {
+            "type": "integer"
+          }
+        },
+        "required": ["targetFloor"]
+      },
+      "LiftStatusUpdate": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "IDLE",
+              "MOVING_UP",
+              "MOVING_DOWN",
+              "DOOR_OPENING",
+              "DOOR_CLOSING"
+            ]
+          }
+        },
+        "required": ["status"]
+      },
+      "Floor": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "integer"
+          },
+          "upButtonPressed": {
+            "type": "boolean"
+          },
+          "downButtonPressed": {
+            "type": "boolean"
+          }
+        },
+        "required": ["number", "upButtonPressed", "downButtonPressed"]
+      },
+      "FloorCall": {
+        "type": "object",
+        "properties": {
+          "floorNumber": {
+            "type": "integer"
+          },
+          "direction": {
+            "type": "string",
+            "enum": ["UP", "DOWN"]
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": ["floorNumber", "direction", "timestamp"]
+      },
+      "CallRequest": {
+        "type": "object",
+        "properties": {
+          "direction": {
+            "type": "string",
+            "enum": ["UP", "DOWN"]
+          }
+        },
+        "required": ["direction"]
+      }
+    }
+  }
+}
