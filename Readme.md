@@ -57,7 +57,7 @@ NB : The system is still under development. #WIP - Work In Progress
 ---
 
 ```
-   cp src/.env.example src/.env
+   cp src/.env.example src/.env.development
 ```
 
 ---
