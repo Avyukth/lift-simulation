@@ -35,9 +35,10 @@ WORKDIR /app
 
 # Create database directory
 RUN mkdir -p /app/db && chown -R lsuser:lsgroup /app/db
-
+RUN mkdir -p /app/docs && chown -R lsuser:lsgroup /app/docs
 # Copy the binary from builder
 COPY --from=builder --chown=lsuser:lsgroup /app/lift-simulation .
+COPY --from=builder --chown=lsuser:lsgroup /app/docs/swagger.json /app/docs/swagger.json
 
 # Copy the appropriate .env file based on the ENV argument
 ARG ENV=development
