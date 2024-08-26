@@ -22,10 +22,12 @@ The ER diagram provides a visual representation of the data model used in the Li
 
 - Dynamic system configuration (number of floors and lifts)
 - Real-time lift status monitoring
-- Intelligent lift assignment algorithm
 - Simulated lift movement and door operations
 - RESTful API for easy integration
-- WebSocket support for real-time updates
+- WebSocket support for real-time updates (#WIP)
+- Intelligent lift assignment algorithm (#WIP)
+
+NB : The system is still under development. #WIP - Work In Progress
 
 ## Getting Started
 
