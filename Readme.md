@@ -115,6 +115,12 @@ To set up the development environment:
 1. Install Go 1.23 or later
 2. Install project dependencies:
 
+   `Docker`
+
+   `Docker Compose`
+
+   `Make`
+
 ---
 
 ```
