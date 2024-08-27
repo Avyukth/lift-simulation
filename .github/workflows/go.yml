@@ -7,11 +7,9 @@ on:
     branches: [main]
 
 env:
-  GO_VERSION: "1.23"
+  GO_VERSION: "1.20"
   ENV: ci
   AWS_REGION: "us-east-2"
-  LS_APP: lift-sim
-  VERSION: 0.0.1
 
 jobs:
   build:
@@ -61,6 +59,9 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v3
 
+      - name: Set short SHA
+        run: echo "SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-8)" >> $GITHUB_ENV
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
@@ -84,9 +85,9 @@ jobs:
           context: .
           file: ./deployments/docker/dockerfile.lift-simulation
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/${{ env.LS_APP }}:${{ env.VERSION }}
+          tags: lift-simulation:${{ env.SHORT_SHA }}
           build-args: |
-            BUILD_REF=${{ env.VERSION }}
+            BUILD_REF=${{ env.SHORT_SHA }}
             BUILD_DATE=${{ github.event.repository.updated_at }}
             ENV=ci
           cache-from: type=local,src=/tmp/.buildx-cache
@@ -105,6 +106,9 @@ jobs:
     env:
       ENV: production
     steps:
+      - name: Set short SHA
+        run: echo "SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-8)" >> $GITHUB_ENV
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
@@ -115,14 +119,13 @@ jobs:
       - name: Deploy to EC2
         env:
           EC2_IP: ${{ secrets.EC2_IP }}
-          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
         run: |
           echo "Deploying to EC2 (Production Environment)..."
           ssh -i ${{ secrets.EC2_SSH_KEY }} -o StrictHostKeyChecking=no ubuntu@$EC2_IP << EOF
-            docker pull ${{ secrets.DOCKER_USERNAME }}/${{ env.LS_APP }}:${{ env.VERSION }}
-            docker stop ${{ env.LS_APP }} || true
-            docker rm ${{ env.LS_APP }} || true
-            docker run -d --name ${{ env.LS_APP }} -p 80:8080 \
+            docker pull ${{ secrets.DOCKER_USERNAME }}/lift-simulation:${SHORT_SHA}
+            docker stop lift-simulation || true
+            docker rm lift-simulation || true
+            docker run -d --name lift-simulation -p 80:8080 \
               -e ENV=production \
-              ${{ secrets.DOCKER_USERNAME }}/${{ env.LS_APP }}:${{ env.VERSION }}
+              ${{ secrets.DOCKER_USERNAME }}/lift-simulation:${SHORT_SHA}
           EOF
