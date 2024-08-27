@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 env:
-  GO_VERSION: "1.23" # Updated to a valid Go version
+  GO_VERSION: "1.23"
   ENV: ci
   AWS_REGION: "us-east-2"
 
