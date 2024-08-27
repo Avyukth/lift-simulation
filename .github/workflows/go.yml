@@ -122,10 +122,10 @@ jobs:
         run: |
           echo "Deploying to EC2 (Production Environment)..."
           ssh -i ${{ secrets.EC2_SSH_KEY }} -o StrictHostKeyChecking=no ubuntu@$EC2_IP << EOF
-            docker pull ${{ secrets.DOCKER_USERNAME }}/lift-simulation:${SHORT_SHA}
+            docker pull lift-simulation:${SHORT_SHA}
             docker stop lift-simulation || true
             docker rm lift-simulation || true
             docker run -d --name lift-simulation -p 80:8080 \
               -e ENV=production \
-              ${{ secrets.DOCKER_USERNAME }}/lift-simulation:${SHORT_SHA}
+              lift-simulation:${SHORT_SHA}
           EOF
