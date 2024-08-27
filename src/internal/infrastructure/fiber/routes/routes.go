@@ -31,9 +31,7 @@ func SetupRoutes(config config.RouteConfig) {
 	}
 	systemVerification := middleware.NewSystemVerificationMiddleware(repo, fiberLog)
 	_ = middleware.New(authConfig)
-	app.Use(cors.New(cors.Config{
-		AllowOrigins: "*",
-	}))
+	app.Use(cors.New())
 
 	// Swagger documentation
 	app.Use("/docs", filesystem.New(filesystem.Config{
