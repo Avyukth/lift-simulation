@@ -22,8 +22,8 @@ type Config struct {
 		WriteTimeout    time.Duration `conf:"default:10s"`
 		IdleTimeout     time.Duration `conf:"default:120s"`
 		ShutdownTimeout time.Duration `conf:"default:20s"`
-		APIHost         string        `conf:"default:0.0.0.0:4000"`
-		DebugHost       string        `conf:"default:0.0.0.0:5000"`
+		APIHost         string        `conf:"default:0.0.0.0:8080"`
+		DebugHost       string        `conf:"default:0.0.0.0:9090"`
 	}
 	Auth struct {
 		KeysFolder string `conf:"default:zarf/keys/"`
