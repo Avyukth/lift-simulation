@@ -20,7 +20,7 @@ The ER diagram provides a visual representation of the data model used in the Li
 
 ## Swagger UI reference
 
-https://api.subhrajit.me
+https://projects.subhrajit.me/swagger
 
 ## Key Features
 
