@@ -9,6 +9,7 @@ on:
 env:
   GO_VERSION: "1.23"
   AWS_REGION: "us-east-2"
+  DOCKER_USERNAME: "avyukth"
 
 jobs:
   build:
@@ -91,7 +92,7 @@ jobs:
           context: .
           file: ./deployments/docker/dockerfile.lift-simulation
           push: true
-          tags: lift-simulation:${{ env.SHORT_SHA }}
+          tags: ${{ env.DOCKER_USERNAME }}/lift-simulation:${{ env.SHORT_SHA }}
           build-args: |
             BUILD_REF=${{ env.SHORT_SHA }}
             BUILD_DATE=${{ github.event.repository.updated_at }}
@@ -137,7 +138,7 @@ jobs:
           echo "Deploying to EC2 (Production Environment)..."
           scp -i ${{ secrets.EC2_SSH_KEY }} -o StrictHostKeyChecking=no .env.generated ubuntu@$EC2_IP:/home/ubuntu/lift-simulation.env
           ssh -i ${{ secrets.EC2_SSH_KEY }} -o StrictHostKeyChecking=no ubuntu@$EC2_IP << EOF
-            docker pull lift-simulation:${SHORT_SHA}
+            docker pull ${{ env.DOCKER_USERNAME }}/lift-simulation:${SHORT_SHA}
             docker stop lift-simulation || true
             docker rm lift-simulation || true
             docker run -d --name lift-simulation -p 80:8080 \
