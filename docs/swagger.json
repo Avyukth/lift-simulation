@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Lift Simulation API",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "API for managing a lift simulation system"
   },
   "servers": [
@@ -16,6 +16,24 @@
     }
   ],
   "paths": {
+    "/health": {
+      "get": {
+        "summary": "Check API health",
+        "responses": {
+          "200": {
+            "description": "API is healthy",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "example": "OK"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/system/configure": {
       "post": {
         "summary": "Configure the lift system",
@@ -541,6 +559,15 @@
           }
         },
         "required": ["direction"]
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          }
+        },
+        "required": ["error"]
       }
     }
   }
