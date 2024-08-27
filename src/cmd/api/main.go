@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"expvar"
 	"fmt"
 	"net/http"
@@ -11,6 +12,7 @@ import (
 	"syscall"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/pkg/errors"
 
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/recover"
@@ -116,10 +118,10 @@ func run(ctx context.Context, log *logger.Logger, fiberLog *logger.FiberLogger) 
 	// Start Debug Service
 
 	go func() {
-		log.Info(ctx, "startup", "status", "debug router started", "host", cfg.Web.DebugHost)
+		log.Info(ctx, "startup", "status", "debug router started", "host", cfg.Web.DebugHostPort)
 
-		if err := http.ListenAndServe(cfg.Web.DebugHost, http.DefaultServeMux); err != nil {
-			log.Error(ctx, "shutdown", "status", "debug router closed", "host", cfg.Web.DebugHost, "msg", err)
+		if err := http.ListenAndServe(cfg.Web.DebugHostPort, http.DefaultServeMux); err != nil {
+			log.Error(ctx, "shutdown", "status", "debug router closed", "host", cfg.Web.DebugHostPort, "msg", err)
 		}
 	}()
 
@@ -166,9 +168,40 @@ func run(ctx context.Context, log *logger.Logger, fiberLog *logger.FiberLogger) 
 	serverErrors := make(chan error, 1)
 
 	go func() {
-		log.Info(ctx, "startup", "status", "api router started", "host", cfg.Web.APIHost)
-		serverErrors <- app.Listen(cfg.Web.APIHost)
+		log.Info(ctx, "startup", "status", "http router started", "host", cfg.Web.HTTPHostPort)
+		err := app.Listen(cfg.Web.HTTPHostPort)
+		if err != nil {
+			serverErrors <- errors.Wrap(err, "http server error")
+		}
 	}()
+
+	// Start HTTPS server if TLS is configured
+	if cfg.Web.CertFile != "" && cfg.Web.KeyFile != "" {
+		go func() {
+			log.Info(ctx, "startup", "status", "https router started", "host", cfg.Web.HTTPSHostPort)
+			cert, err := tls.LoadX509KeyPair(cfg.Web.CertFile, cfg.Web.KeyFile)
+			if err != nil {
+				serverErrors <- errors.Wrap(err, "loading ssl certificates")
+				return
+			}
+
+			tlsConfig := &tls.Config{
+				Certificates: []tls.Certificate{cert},
+				MinVersion:   tls.VersionTLS12,
+			}
+
+			ln, err := tls.Listen("tcp", cfg.Web.HTTPSHostPort, tlsConfig)
+			if err != nil {
+				serverErrors <- errors.Wrap(err, "creating https listener")
+				return
+			}
+
+			err = app.Listener(ln)
+			if err != nil {
+				serverErrors <- errors.Wrap(err, "https server error")
+			}
+		}()
+	}
 
 	// -------------------------------------------------------------------------
 	// Shutdown

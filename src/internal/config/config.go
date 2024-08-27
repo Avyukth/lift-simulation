@@ -22,8 +22,11 @@ type Config struct {
 		WriteTimeout    time.Duration `conf:"default:10s"`
 		IdleTimeout     time.Duration `conf:"default:120s"`
 		ShutdownTimeout time.Duration `conf:"default:20s"`
-		APIHost         string        `conf:"default:0.0.0.0:8080"`
-		DebugHost       string        `conf:"default:0.0.0.0:9090"`
+		HTTPHostPort    string        `conf:"default:0.0.0.0:8080"`
+		DebugHostPort   string        `conf:"default:0.0.0.0:9090"`
+		HTTPSHostPort   string        `conf:"default:8443"`
+		CertFile        string        `conf:"default:/certs/fullchain.pem"`
+		KeyFile         string        `conf:"default:/certs/privkey.pem"`
 	}
 	Auth struct {
 		KeysFolder string `conf:"default:zarf/keys/"`
@@ -91,8 +94,12 @@ func LoadConfig(build string) (Config, error) {
 	// Override config with values from .env
 	cfg.Auth.JWTSecret = viper.GetString("JWT_SECRET")
 	cfg.Redis.Password = viper.GetString("REDIS_PASSWORD")
-	cfg.API.Port = viper.GetInt("API_PORT")
-	cfg.API.Secret = viper.GetString("API_SECRET")
+
+	cfg.Web.HTTPHostPort = viper.GetString("HTTP_PORT")
+	cfg.Web.HTTPSHostPort = viper.GetString("HTTPS_PORT")
+	cfg.Web.CertFile = viper.GetString("CERT_FILE")
+	cfg.Web.KeyFile = viper.GetString("KEY_FILE")
+
 	cfg.Redis.Host = viper.GetString("REDIS_HOST")
 	cfg.Redis.Port = viper.GetInt("REDIS_PORT")
 	cfg.LogLevel = viper.GetString("LOG_LEVEL")

@@ -1,9 +1,10 @@
+# Builder stage
 FROM golang:1.23-alpine AS builder
 
 WORKDIR /app
 
-# Install build dependencies
-RUN apk add --no-cache git gcc musl-dev
+# Install build dependencies and OpenSSL
+RUN apk add --no-cache git gcc musl-dev openssl
 
 # Copy the entire src directory
 COPY src/ .
@@ -15,6 +16,11 @@ RUN go mod download
 # Build arguments
 ARG BUILD_REF
 ARG BUILD_DATE
+
+# Generate self-signed SSL certificates
+RUN mkdir -p /app/certs && \
+    openssl req -x509 -newkey rsa:4096 -nodes -keyout /app/certs/privkey.pem -out /app/certs/fullchain.pem -days 365 -subj "/CN=localhost" && \
+    chmod 644 /app/certs/privkey.pem /app/certs/fullchain.pem
 
 # Build the application
 RUN CGO_ENABLED=1 GOOS=linux go build -ldflags "-X main.build=${BUILD_REF}" -o lift-simulation ./cmd/api
@@ -33,17 +39,24 @@ RUN addgroup -g 1000 -S lsgroup && \
 WORKDIR /app
 
 # Create necessary directories
-RUN mkdir -p /app/db /app/docs && chown -R lsuser:lsgroup /app
+RUN mkdir -p /app/db /app/docs /app/certs && chown -R lsuser:lsgroup /app
 
 # Copy the binary and swagger file from builder
 COPY --from=builder --chown=lsuser:lsgroup /app/lift-simulation .
 COPY --from=builder --chown=lsuser:lsgroup /app/docs/swagger.json /app/docs/swagger.json
+
+# Copy the SSL certificates from builder
+COPY --from=builder --chown=lsuser:lsgroup /app/certs/privkey.pem /app/certs/privkey.pem
+COPY --from=builder --chown=lsuser:lsgroup /app/certs/fullchain.pem /app/certs/fullchain.pem
 
 # Copy the generated .env file
 COPY --chown=lsuser:lsgroup src/.env.generated .env
 
 # Switch to non-root user
 USER lsuser
+
+# Expose both HTTP and HTTPS ports
+EXPOSE 8080 8443
 
 CMD ["./lift-simulation"]
 
