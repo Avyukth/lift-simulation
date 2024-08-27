@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Set variables
-CERT_DIR="./certs"
+CERT_DIR="src/certs"
 PRIVATE_KEY="$CERT_DIR/privkey.pem"
 CERTIFICATE="$CERT_DIR/fullchain.pem"
 DAYS_VALID=365

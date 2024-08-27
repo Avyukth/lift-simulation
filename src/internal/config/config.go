@@ -24,7 +24,7 @@ type Config struct {
 		ShutdownTimeout time.Duration `conf:"default:20s"`
 		HTTPHostPort    string        `conf:"default:0.0.0.0:8080"`
 		DebugHostPort   string        `conf:"default:0.0.0.0:9090"`
-		HTTPSHostPort   string        `conf:"default:8443"`
+		HTTPSHostPort   string        `conf:"default:0.0.0.0:8443"`
 		CertFile        string        `conf:"default:/certs/fullchain.pem"`
 		KeyFile         string        `conf:"default:/certs/privkey.pem"`
 	}
@@ -95,8 +95,6 @@ func LoadConfig(build string) (Config, error) {
 	cfg.Auth.JWTSecret = viper.GetString("JWT_SECRET")
 	cfg.Redis.Password = viper.GetString("REDIS_PASSWORD")
 
-	cfg.Web.HTTPHostPort = viper.GetString("HTTP_PORT")
-	cfg.Web.HTTPSHostPort = viper.GetString("HTTPS_PORT")
 	cfg.Web.CertFile = viper.GetString("CERT_FILE")
 	cfg.Web.KeyFile = viper.GetString("KEY_FILE")
 

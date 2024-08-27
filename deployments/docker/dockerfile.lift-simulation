@@ -55,8 +55,8 @@ COPY --chown=lsuser:lsgroup src/.env.generated .env
 # Switch to non-root user
 USER lsuser
 
-# Expose both HTTP and HTTPS ports
-EXPOSE 8080 8443
+# # Expose both HTTP and HTTPS ports
+# EXPOSE 8080 8443
 
 CMD ["./lift-simulation"]
 
