@@ -1,4 +1,4 @@
-name: Go
+name: Go CI/CD
 
 on:
   push:
@@ -9,6 +9,7 @@ on:
 env:
   GO_VERSION: "1.23"
   ENV: ci
+  AWS_REGION: "us-east-2"
 
 jobs:
   build:
@@ -118,3 +119,29 @@ jobs:
         run: |
           rm -rf /tmp/.buildx-cache
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+
+  deploy:
+    name: Deploy to EC2
+    runs-on: ubuntu-latest
+    needs: docker
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Deploy to EC2
+        env:
+          EC2_IP: ${{ secrets.EC2_IP }}
+          DOCKER_IMAGE: ${{ secrets.DOCKER_USERNAME }}/lift-simulation:${{ github.sha }}
+        run: |
+          echo "Deploying to EC2..."
+          ssh -i ${{ secrets.EC2_SSH_KEY }} ubuntu@$EC2_IP << EOF
+            docker pull $DOCKER_IMAGE
+            docker stop lift-simulation || true
+            docker rm lift-simulation || true
+            docker run -d --name lift-simulation -p 80:8080 $DOCKER_IMAGE
+          EOF
