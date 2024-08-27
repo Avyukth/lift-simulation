@@ -104,58 +104,58 @@ jobs:
           rm -rf /tmp/.buildx-cache
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
 
-  deploy:
-    name: Deploy to EC2
-    runs-on: ubuntu-latest
-    needs: docker
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v3
+  # deploy:
+  #   name: Deploy to EC2
+  #   runs-on: ubuntu-latest
+  #   needs: docker
+  #   if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+  #   steps:
+  #     - name: Check out code
+  #       uses: actions/checkout@v3
 
-      - name: Set short SHA
-        run: echo "SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-8)" >> $GITHUB_ENV
+  #     - name: Set short SHA
+  #       run: echo "SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-8)" >> $GITHUB_ENV
 
-      - name: Generate production environment file
-        run: |
-          chmod +x ./scripts/generate_env.sh
-          ./scripts/generate_env.sh
-        env:
-          ENV_FILE: ${{ secrets.ENV_FILE }}
-          GO_ENV: production
+  #     - name: Generate production environment file
+  #       run: |
+  #         chmod +x ./scripts/generate_env.sh
+  #         ./scripts/generate_env.sh
+  #       env:
+  #         ENV_FILE: ${{ secrets.ENV_FILE }}
+  #         GO_ENV: production
 
-      - name: Debug EC2_IP
-        run: |
-          echo "Raw EC2_IP: '${{ secrets.EC2_IP }}'"
-          CLEANED_IP=$(echo '${{ secrets.EC2_IP }}' | tr -cd '[:print:]' | tr -d '[:space:]"')
-          echo "Cleaned EC2_IP: '$CLEANED_IP'"
-          if [[ ! $CLEANED_IP =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "Error: Invalid IP address format"
-            exit 1
-          fi
-          echo "CLEANED_IP=$CLEANED_IP" >> $GITHUB_ENV
+  #     - name: Debug EC2_IP
+  #       run: |
+  #         echo "Raw EC2_IP: '${{ secrets.EC2_IP }}'"
+  #         CLEANED_IP=$(echo '${{ secrets.EC2_IP }}' | tr -cd '[:print:]' | tr -d '[:space:]"')
+  #         echo "Cleaned EC2_IP: '$CLEANED_IP'"
+  #         if [[ ! $CLEANED_IP =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+  #           echo "Error: Invalid IP address format"
+  #           exit 1
+  #         fi
+  #         echo "CLEANED_IP=$CLEANED_IP" >> $GITHUB_ENV
 
-      - name: Setup SSH key
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.EC2_PEM_KEY }}" | base64 -d > ~/.ssh/ec2_key.pem
-          chmod 600 ~/.ssh/ec2_key.pem
-          ssh-keyscan -H ${{ env.CLEANED_IP }} >> ~/.ssh/known_hosts
+  #     - name: Setup SSH key
+  #       run: |
+  #         mkdir -p ~/.ssh
+  #         echo "${{ secrets.EC2_PEM_KEY }}" | base64 -d > ~/.ssh/ec2_key.pem
+  #         chmod 600 ~/.ssh/ec2_key.pem
+  #         ssh-keyscan -H ${{ env.CLEANED_IP }} >> ~/.ssh/known_hosts
 
-      - name: Deploy to EC2
-        run: |
-          echo "Deploying to EC2 (Production Environment)..."
-          echo "Using IP: ${{ env.CLEANED_IP }}"
-          scp -v -i ~/.ssh/ec2_key.pem .env.generated ubuntu@${{ env.CLEANED_IP }}:/home/ubuntu/lift-simulation.env
-          ssh -v -i ~/.ssh/ec2_key.pem ubuntu@${{ env.CLEANED_IP }} << EOF
-            docker pull ${{ env.DOCKER_USERNAME }}/lift-simulation:${SHORT_SHA}
-            docker stop lift-simulation || true
-            docker rm lift-simulation || true
-            docker run -d --name lift-simulation -p 80:8080 \
-              --env-file /home/ubuntu/lift-simulation.env \
-              ${{ env.DOCKER_USERNAME }}/lift-simulation:${SHORT_SHA}
-          EOF
+  #     - name: Deploy to EC2
+  #       run: |
+  #         echo "Deploying to EC2 (Production Environment)..."
+  #         echo "Using IP: ${{ env.CLEANED_IP }}"
+  #         scp -v -i ~/.ssh/ec2_key.pem .env.generated ubuntu@${{ env.CLEANED_IP }}:/home/ubuntu/lift-simulation.env
+  #         ssh -v -i ~/.ssh/ec2_key.pem ubuntu@${{ env.CLEANED_IP }} << EOF
+  #           docker pull ${{ env.DOCKER_USERNAME }}/lift-simulation:${SHORT_SHA}
+  #           docker stop lift-simulation || true
+  #           docker rm lift-simulation || true
+  #           docker run -d --name lift-simulation -p 80:8080 \
+  #             --env-file /home/ubuntu/lift-simulation.env \
+  #             ${{ env.DOCKER_USERNAME }}/lift-simulation:${SHORT_SHA}
+  #         EOF
 
-      - name: Cleanup
-        if: always()
-        run: rm -f ~/.ssh/ec2_key.pem
+  #     - name: Cleanup
+  #       if: always()
+  #       run: rm -f ~/.ssh/ec2_key.pem
