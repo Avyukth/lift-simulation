@@ -77,15 +77,17 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build and push
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
         uses: docker/build-push-action@v4
         with:
           context: .
           file: ./deployments/docker/dockerfile.lift-simulation
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ secrets.DOCKER_USERNAME }}/lift-simulation:${{ github.sha }}
+          tags: ${{ env.DOCKER_USERNAME }}/lift-simulation:${{ github.sha | slice(0, 5) }}
           build-args: |
             ENV=ci
-            BUILD_REF=${{ github.sha }}
+            BUILD_REF=${{ github.sha | slice(0, 5) }}
             BUILD_DATE=${{ github.event.repository.updated_at }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new
@@ -111,12 +113,13 @@ jobs:
       - name: Deploy to EC2
         env:
           EC2_IP: ${{ secrets.EC2_IP }}
-          DOCKER_IMAGE: ${{ secrets.DOCKER_USERNAME }}/lift-simulation:${{ github.sha }}
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_TAG: ${{ github.sha | slice(0, 5) }}
         run: |
           echo "Deploying to EC2..."
           ssh -i ${{ secrets.EC2_SSH_KEY }} ubuntu@$EC2_IP << EOF
-            docker pull $DOCKER_IMAGE
+            docker pull $DOCKER_USERNAME/lift-simulation:$DOCKER_TAG
             docker stop lift-simulation || true
             docker rm lift-simulation || true
-            docker run -d --name lift-simulation -p 80:8080 $DOCKER_IMAGE
+            docker run -d --name lift-simulation -p 80:8080 $DOCKER_USERNAME/lift-simulation:$DOCKER_TAG
           EOF
