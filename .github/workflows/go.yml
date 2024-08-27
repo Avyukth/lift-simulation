@@ -8,16 +8,12 @@ on:
 
 env:
   GO_VERSION: "1.23"
-  ENV: ci
   AWS_REGION: "us-east-2"
 
 jobs:
   build:
     name: Build and Test
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./src
     steps:
       - name: Check out code
         uses: actions/checkout@v3
@@ -35,21 +31,23 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
 
-      - name: Create CI .env file
+      - name: Generate CI environment file
         run: |
-          echo "API_KEY=${{ secrets.API_KEY }}" > .env.ci
-          echo "DB_PATH=:memory:" >> .env.ci
-          echo "LOG_LEVEL=debug" >> .env.ci
-          # Add other necessary environment variables
-
-      - name: Tidy modules
-        run: go mod tidy
+          chmod +x ./scripts/generate_env.sh
+          ./scripts/generate_env.sh
+        env:
+          ENV_FILE: ${{ secrets.ENV_FILE }}
+          GO_ENV: ci
 
       - name: Run tests
-        run: GO_ENV=ci go test -v ./...
+        run: |
+          cd src
+          go test -v ./...
 
       - name: Build
-        run: GO_ENV=ci go build -v ./...
+        run: |
+          cd src
+          go build -v ./...
 
   docker:
     name: Build and Push Docker Image
@@ -61,6 +59,14 @@ jobs:
 
       - name: Set short SHA
         run: echo "SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-8)" >> $GITHUB_ENV
+
+      - name: Generate CI environment file
+        run: |
+          chmod +x ./scripts/generate_env.sh
+          ./scripts/generate_env.sh
+        env:
+          ENV_FILE: ${{ secrets.ENV_FILE }}
+          GO_ENV: ci
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
@@ -89,7 +95,6 @@ jobs:
           build-args: |
             BUILD_REF=${{ env.SHORT_SHA }}
             BUILD_DATE=${{ github.event.repository.updated_at }}
-            ENV=ci
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new
 
@@ -103,11 +108,20 @@ jobs:
     runs-on: ubuntu-latest
     needs: docker
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    env:
-      ENV: production
     steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+
       - name: Set short SHA
         run: echo "SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-8)" >> $GITHUB_ENV
+
+      - name: Generate production environment file
+        run: |
+          chmod +x ./scripts/generate_env.sh
+          ./scripts/generate_env.sh
+        env:
+          ENV_FILE: ${{ secrets.ENV_FILE }}
+          GO_ENV: production
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -121,11 +135,12 @@ jobs:
           EC2_IP: ${{ secrets.EC2_IP }}
         run: |
           echo "Deploying to EC2 (Production Environment)..."
+          scp -i ${{ secrets.EC2_SSH_KEY }} -o StrictHostKeyChecking=no .env.generated ubuntu@$EC2_IP:/home/ubuntu/lift-simulation.env
           ssh -i ${{ secrets.EC2_SSH_KEY }} -o StrictHostKeyChecking=no ubuntu@$EC2_IP << EOF
             docker pull lift-simulation:${SHORT_SHA}
             docker stop lift-simulation || true
             docker rm lift-simulation || true
             docker run -d --name lift-simulation -p 80:8080 \
-              -e ENV=production \
+              --env-file /home/ubuntu/lift-simulation.env \
               lift-simulation:${SHORT_SHA}
           EOF

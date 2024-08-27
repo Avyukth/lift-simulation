@@ -15,7 +15,6 @@ RUN go mod download
 # Build arguments
 ARG BUILD_REF
 ARG BUILD_DATE
-ARG ENV=development
 
 # Build the application
 RUN CGO_ENABLED=1 GOOS=linux go build -ldflags "-X main.build=${BUILD_REF}" -o lift-simulation ./cmd/api
@@ -33,21 +32,18 @@ RUN addgroup -g 1000 -S lsgroup && \
 # Set working directory
 WORKDIR /app
 
-# Create database directory
-RUN mkdir -p /app/db && chown -R lsuser:lsgroup /app/db
-RUN mkdir -p /app/docs && chown -R lsuser:lsgroup /app/docs
-# Copy the binary from builder
+# Create necessary directories
+RUN mkdir -p /app/db /app/docs && chown -R lsuser:lsgroup /app
+
+# Copy the binary and swagger file from builder
 COPY --from=builder --chown=lsuser:lsgroup /app/lift-simulation .
 COPY --from=builder --chown=lsuser:lsgroup /app/docs/swagger.json /app/docs/swagger.json
 
-# Copy the appropriate .env file based on the ENV argument
-ARG ENV=development
-COPY --chown=lsuser:lsgroup src/.env.${ENV} .env
+# Copy the generated .env file
+COPY --chown=lsuser:lsgroup .env.generated .env
 
 # Switch to non-root user
 USER lsuser
-
-ENV GO_ENV=${ENV}
 
 CMD ["./lift-simulation"]
 
