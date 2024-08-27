@@ -95,33 +95,3 @@ func (h *LiftHandler) SetLiftStatus(c *fiber.Ctx) error {
 
 	return c.SendStatus(fiber.StatusOK)
 }
-
-// AssignLiftToFloor handles POST requests to assign a lift to a floor
-// func (h *LiftHandler) AssignLiftToFloor(c *fiber.Ctx) error {
-// 	floorNum, err := c.ParamsInt("floorNum")
-// 	if err != nil {
-// 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-// 			"error": "Invalid floor number",
-// 		})
-// 	}
-
-// 	var request struct {
-// 		FloorNumber int              `json:"floorNumber"`
-// 		Direction   domain.Direction `json:"direction"`
-// 	}
-
-// 	if err := c.BodyParser(&request); err != nil {
-// 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-// 			"error": "Invalid request body",
-// 		})
-// 	}
-
-// 	lift, err := h.liftService.AssignLiftToFloor(c.Context(), request.FloorNumber, request.Direction)
-// 	if err != nil {
-// 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-// 			"error": "Failed to assign lift to floor",
-// 		})
-// 	}
-
-// 	return c.JSON(lift)
-// }

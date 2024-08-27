@@ -67,29 +67,6 @@ func (s *LiftService) ListLifts(ctx context.Context) ([]*domain.Lift, error) {
 	return s.repo.ListLifts(ctx)
 }
 
-// AssignLiftToFloor assigns the most appropriate lift to service a floor request
-func (s *LiftService) AssignLiftToFloor(ctx context.Context, floorNum int, floorId string, direction domain.Direction) (*domain.Lift, error) {
-	lifts, err := s.repo.ListLifts(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	assignedLift := s.findNearestAvailableLift(lifts, floorNum, direction)
-	if assignedLift == nil {
-		return nil, errors.New("no available lifts")
-	}
-
-	if err := assignedLift.AssignToFloor(floorNum); err != nil {
-		return nil, err
-	}
-
-	if err := s.repo.UpdateLift(ctx, assignedLift); err != nil {
-		return nil, err
-	}
-
-	return assignedLift, nil
-}
-
 // findNearestAvailableLift is a helper function to find the nearest available lift
 func (s *LiftService) findNearestAvailableLift(lifts []*domain.Lift, floorNum int, direction domain.Direction) *domain.Lift {
 	var nearestLift *domain.Lift
