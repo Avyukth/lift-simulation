@@ -2,3 +2,4 @@
 .vscode
 src/.env.*
 !src/.env.example
+!src/.env.generated
