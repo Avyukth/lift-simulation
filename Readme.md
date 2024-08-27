@@ -61,7 +61,7 @@ NB : The system is still under development. #WIP - Work In Progress
 ---
 
 ```
-   cp src/.env.example src/.env.development
+   cp src/.env.generated src/.env.development
 ```
 
 ---
@@ -136,7 +136,7 @@ make up
 
 Go to
 
-`http://localhost:4000/swagger`
+`http://localhost:80/swagger`
 
 To see the system API details.
 
