@@ -71,8 +71,8 @@ jobs:
 
       - name: Generate self-signed SSL certificates
         run: |
-          mkdir -p certs
-          openssl req -x509 -newkey rsa:4096 -keyout certs/privkey.pem -out certs/fullchain.pem -days 365 -nodes -subj "/CN=localhost"
+          chmod +x ./scripts/generate_env.sh
+          ./scripts/create_ssl_certs.sh
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
