@@ -168,6 +168,12 @@ func run(ctx context.Context, log *logger.Logger, fiberLog *logger.FiberLogger) 
 	if cfg.Web.CertFile != "" && cfg.Web.KeyFile != "" {
 		go func() {
 			log.Info(ctx, "startup", "status", "https router started", "host", cfg.Web.HTTPSHostPort)
+			if _, err := os.Stat("/app/certs"); os.IsNotExist(err) {
+				log.Error(ctx, "shutdown", "status", "debug router closed", "certs folder not found ========================================", cfg.Web.KeyFile, "msg", err)
+				log.Error(ctx, "shutdown", "status", "debug router closed", "certFile", cfg.Web.CertFile, "msg", err)
+				serverErrors <- errors.New("certs folder not found ========================================")
+				return
+			}
 			cert, err := tls.LoadX509KeyPair(cfg.Web.CertFile, cfg.Web.KeyFile)
 			if err != nil {
 				serverErrors <- errors.Wrap(err, "loading ssl certificates")
