@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/Avyukth/lift-simulation/internal/application/ports"
