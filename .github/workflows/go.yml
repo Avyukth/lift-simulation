@@ -129,7 +129,10 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.EC2_PEM_KEY }}" | base64 -d > ~/.ssh/ec2_key.pem
           chmod 600 ~/.ssh/ec2_key.pem
-          ssh-keyscan -H ${{ secrets.EC2_IP }} >> ~/.ssh/known_hosts
+          # Remove quotes and trim whitespace from EC2_IP
+          EC2_IP=$(echo ${{ secrets.EC2_IP }} | tr -d '"' | xargs)
+          echo "$EC2_IP" > ~/.ssh/ec2_ip
+          ssh-keyscan -H "$EC2_IP" >> ~/.ssh/known_hosts
 
       - name: Deploy to EC2
         env:
