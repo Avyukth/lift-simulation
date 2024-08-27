@@ -1,0 +1,24 @@
+name: Health Check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "0 */3 * * *" # Runs every 3 hours
+jobs:
+  health_check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run health check
+        run: |
+          response=$(curl -sS -o /dev/null -w "%{http_code}" https://projects.subhrajit.me/api/v1/health)
+
+          if [ $response = "200" ]; then
+            echo "Health check passed"
+            exit 0
+          else
+            echo "Health check failed with status code $response"
+            exit 1
+          fi

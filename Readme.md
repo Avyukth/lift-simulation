@@ -1,3 +1,5 @@
+[![Health Check](https://github.com/Avyukth/lift-simulation/actions/workflows/health-check.yml/badge.svg)](https://github.com/Avyukth/lift-simulation/actions/workflows/health-check.yml)
+
 # Lift Simulation System
 
 ## Overview
