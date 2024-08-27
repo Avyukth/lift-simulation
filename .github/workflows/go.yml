@@ -124,23 +124,30 @@ jobs:
           ENV_FILE: ${{ secrets.ENV_FILE }}
           GO_ENV: production
 
+      - name: Debug EC2_IP
+        run: |
+          echo "Raw EC2_IP: '${{ secrets.EC2_IP }}'"
+          CLEANED_IP=$(echo '${{ secrets.EC2_IP }}' | tr -cd '[:print:]' | tr -d '[:space:]"')
+          echo "Cleaned EC2_IP: '$CLEANED_IP'"
+          if [[ ! $CLEANED_IP =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Error: Invalid IP address format"
+            exit 1
+          fi
+          echo "CLEANED_IP=$CLEANED_IP" >> $GITHUB_ENV
+
       - name: Setup SSH key
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.EC2_PEM_KEY }}" | base64 -d > ~/.ssh/ec2_key.pem
           chmod 600 ~/.ssh/ec2_key.pem
-          # Remove quotes and trim whitespace from EC2_IP
-          EC2_IP=$(echo ${{ secrets.EC2_IP }} | tr -d '"' | xargs)
-          echo "$EC2_IP" > ~/.ssh/ec2_ip
-          ssh-keyscan -H "$EC2_IP" >> ~/.ssh/known_hosts
+          ssh-keyscan -H ${{ env.CLEANED_IP }} >> ~/.ssh/known_hosts
 
       - name: Deploy to EC2
-        env:
-          EC2_IP: ${{ secrets.EC2_IP }}
         run: |
           echo "Deploying to EC2 (Production Environment)..."
-          scp -i ~/.ssh/ec2_key.pem .env.generated ubuntu@$EC2_IP:/home/ubuntu/lift-simulation.env
-          ssh -i ~/.ssh/ec2_key.pem ubuntu@$EC2_IP << EOF
+          echo "Using IP: ${{ env.CLEANED_IP }}"
+          scp -v -i ~/.ssh/ec2_key.pem .env.generated ubuntu@${{ env.CLEANED_IP }}:/home/ubuntu/lift-simulation.env
+          ssh -v -i ~/.ssh/ec2_key.pem ubuntu@${{ env.CLEANED_IP }} << EOF
             docker pull ${{ env.DOCKER_USERNAME }}/lift-simulation:${SHORT_SHA}
             docker stop lift-simulation || true
             docker rm lift-simulation || true
