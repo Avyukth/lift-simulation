@@ -9,6 +9,7 @@ import (
 	"github.com/Avyukth/lift-simulation/internal/infrastructure/fiber/middleware"
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/filesystem"
 	"github.com/gofiber/swagger"
 )
@@ -30,6 +31,9 @@ func SetupRoutes(config config.RouteConfig) {
 	}
 	systemVerification := middleware.NewSystemVerificationMiddleware(repo, fiberLog)
 	_ = middleware.New(authConfig)
+	app.Use(cors.New(cors.Config{
+		AllowOrigins: "*",
+	}))
 
 	// Swagger documentation
 	app.Use("/docs", filesystem.New(filesystem.Config{
