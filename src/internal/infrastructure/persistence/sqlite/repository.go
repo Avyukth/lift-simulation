@@ -378,5 +378,55 @@ func (r *Repository) GetFloorByNumber(ctx context.Context, floorNum int) (*domai
 	return domain.NewFloor(floorID, floorNum), nil
 }
 
+func (r *Repository) AssignLiftToFloor(ctx context.Context, liftID string, floorID string) error {
+	query := `INSERT INTO floor_lift_assignments (floor_id, lift_id) VALUES (?, ?)`
+	_, err := r.db.ExecContext(ctx, query, floorID, liftID)
+	if err != nil {
+		return fmt.Errorf("failed to assign lift to floor: %w", err)
+	}
+	return nil
+}
+
+func (r *Repository) UnassignLiftFromFloor(ctx context.Context, liftID string, floorID string) error {
+	query := `DELETE FROM floor_lift_assignments WHERE floor_id = ? AND lift_id = ?`
+	_, err := r.db.ExecContext(ctx, query, floorID, liftID)
+	if err != nil {
+		return fmt.Errorf("failed to unassign lift from floor: %w", err)
+	}
+	return nil
+}
+
+func (r *Repository) GetAssignedLiftsForFloor(ctx context.Context, floorID string) ([]*domain.Lift, error) {
+	query := `
+        SELECT l.id, l.name, l.current_floor, l.status, l.capacity
+        FROM lifts l
+        JOIN floor_lift_assignments fla ON l.id = fla.lift_id
+        WHERE fla.floor_id = ?
+    `
+	rows, err := r.db.QueryContext(ctx, query, floorID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get assigned lifts: %w", err)
+	}
+	defer rows.Close()
+
+	var lifts []*domain.Lift
+	for rows.Next() {
+		var lift domain.Lift
+		var statusStr string
+		err := rows.Scan(&lift.ID, &lift.Name, &lift.CurrentFloor, &statusStr, &lift.Capacity)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan lift row: %w", err)
+		}
+		lift.Status = domain.StringToLiftStatus(statusStr)
+		lifts = append(lifts, &lift)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("error after scanning all rows: %w", err)
+	}
+
+	return lifts, nil
+}
+
 // Ensure Repository implements ports.Repository interface
 var _ ports.Repository = (*Repository)(nil)

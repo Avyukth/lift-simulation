@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/Avyukth/lift-simulation/internal/application/services"
 	"github.com/Avyukth/lift-simulation/internal/domain"
@@ -71,7 +70,7 @@ func (h *FloorHandler) CallLift(c *fiber.Ctx) error {
 		})
 	}
 
-	lift, err := h.floorService.CallLift(c.Context(), floorNum, request.Direction)
+	err = h.floorService.CallLift(c.Context(), floorNum, request.Direction)
 	if err != nil {
 		switch {
 		case errors.Is(err, domain.ErrFloorNotFound):
@@ -86,8 +85,7 @@ func (h *FloorHandler) CallLift(c *fiber.Ctx) error {
 		}
 	}
 	return c.Status(fiber.StatusAccepted).JSON(fiber.Map{
-		"message": fmt.Sprintf("Lift call accepted. Lift %s is on its way.", lift.Name),
-		"lift":    lift.Name,
+		"message": "Lift call accepted. Lift is on its way",
 	})
 }
 

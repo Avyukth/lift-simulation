@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/Avyukth/lift-simulation/internal/application/events"
 	"github.com/Avyukth/lift-simulation/internal/application/ports"
 	"github.com/Avyukth/lift-simulation/internal/domain"
 	ws "github.com/Avyukth/lift-simulation/internal/infrastructure/fiber/websockets"
@@ -12,18 +13,35 @@ import (
 
 // LiftService handles the business logic for lift operations
 type LiftService struct {
-	repo  ports.LiftRepository
-	wsHub *ws.WebSocketHub
-	log   *logger.Logger
+	repo     ports.LiftOperations
+	eventBus events.EventBus
+	wsHub    *ws.WebSocketHub
+	log      *logger.Logger
+}
+
+type LiftRequestedHandler struct {
+	service *LiftService
+}
+
+func (h *LiftRequestedHandler) Handle(event domain.Event) {
+	if liftRequestedEvent, ok := event.(domain.LiftRequestedEvent); ok {
+		h.service.processLiftRequest(context.Background(), liftRequestedEvent.FloorNumber, liftRequestedEvent.Direction)
+	}
 }
 
 // NewLiftService creates a new instance of LiftService
-func NewLiftService(repo ports.LiftRepository, wsHub *ws.WebSocketHub, log *logger.Logger) *LiftService {
-	return &LiftService{
-		repo:  repo,
-		wsHub: wsHub,
-		log:   log,
+func NewLiftService(repo ports.LiftOperations, eventBus events.EventBus, wsHub *ws.WebSocketHub, log *logger.Logger) *LiftService {
+	service := &LiftService{
+		repo:     repo,
+		eventBus: eventBus,
+		wsHub:    wsHub,
+		log:      log,
 	}
+
+	// Subscribe to LiftRequested events
+	eventBus.Subscribe(domain.LiftRequested, &LiftRequestedHandler{service: service})
+
+	return service
 }
 
 // MoveLift moves a lift to a target floor
@@ -42,9 +60,33 @@ func (s *LiftService) MoveLift(ctx context.Context, liftID string, targetFloor i
 		return fmt.Errorf("lift is already on floor %d", targetFloor)
 	}
 
+	// Unassign the lift from its current floor
+	currentFloor, err := s.repo.GetFloorByNumber(ctx, lift.CurrentFloor)
+	if err != nil {
+		s.log.Error(ctx, "Failed to get current floor", "floor_number", lift.CurrentFloor, "error", err)
+		return fmt.Errorf("failed to get current floor: %w", err)
+	}
+	err = s.UnassignLiftFromFloor(ctx, liftID, currentFloor.ID)
+	if err != nil {
+		s.log.Error(ctx, "Failed to unassign lift from current floor", "lift_id", liftID, "floor_id", currentFloor.ID, "error", err)
+		return fmt.Errorf("failed to unassign lift from current floor: %w", err)
+	}
+
 	if err := lift.MoveTo(targetFloor); err != nil {
 		s.log.Error(ctx, "Failed to move lift", "lift_id", liftID, "target_floor", targetFloor, "error", err)
 		return fmt.Errorf("failed to move lift: %w", err)
+	}
+
+	// Assign the lift to the target floor
+	targetFloorObj, err := s.repo.GetFloorByNumber(ctx, targetFloor)
+	if err != nil {
+		s.log.Error(ctx, "Failed to get target floor", "floor_number", targetFloor, "error", err)
+		return fmt.Errorf("failed to get target floor: %w", err)
+	}
+	err = s.AssignLiftToFloor(ctx, liftID, targetFloorObj.ID)
+	if err != nil {
+		s.log.Error(ctx, "Failed to assign lift to target floor", "lift_id", liftID, "floor_id", targetFloorObj.ID, "error", err)
+		return fmt.Errorf("failed to assign lift to target floor: %w", err)
 	}
 
 	if err := s.repo.UpdateLift(ctx, lift); err != nil {
@@ -105,4 +147,90 @@ func (s *LiftService) SetLiftStatus(ctx context.Context, liftID string, status d
 	}
 
 	return nil
+}
+
+// AssignLiftToFloor assigns a lift to a floor
+func (s *LiftService) AssignLiftToFloor(ctx context.Context, liftID string, floorID string) error {
+	// Check if there are already two lifts assigned to this floor
+	assignedLifts, err := s.repo.GetAssignedLiftsForFloor(ctx, floorID)
+	if err != nil {
+		return fmt.Errorf("failed to get assigned lifts: %w", err)
+	}
+	if len(assignedLifts) >= 2 {
+		return fmt.Errorf("floor already has two lifts assigned")
+	}
+
+	// Assign the lift to the floor
+	err = s.repo.AssignLiftToFloor(ctx, liftID, floorID)
+	if err != nil {
+		return fmt.Errorf("failed to assign lift to floor: %w", err)
+	}
+
+	s.log.Info(ctx, "Lift assigned to floor", "lift_id", liftID, "floor_id", floorID)
+	return nil
+}
+
+// UnassignLiftFromFloor removes a lift assignment from a floor
+func (s *LiftService) UnassignLiftFromFloor(ctx context.Context, liftID string, floorID string) error {
+	err := s.repo.UnassignLiftFromFloor(ctx, liftID, floorID)
+	if err != nil {
+		return fmt.Errorf("failed to unassign lift from floor: %w", err)
+	}
+
+	s.log.Info(ctx, "Lift unassigned from floor", "lift_id", liftID, "floor_id", floorID)
+	return nil
+}
+
+// GetAssignedLiftsForFloor retrieves the lifts assigned to a specific floor
+func (s *LiftService) GetAssignedLiftsForFloor(ctx context.Context, floorID string) ([]*domain.Lift, error) {
+	return s.repo.GetAssignedLiftsForFloor(ctx, floorID)
+}
+
+func (s *LiftService) findAvailableLift(ctx context.Context) (*domain.Lift, error) {
+	lifts, err := s.repo.GetAllLifts(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get lifts: %w", err)
+	}
+
+	var closestLift *domain.Lift
+	minDistance := int(^uint(0) >> 1)
+
+	for _, lift := range lifts {
+		if lift.IsAvailable() {
+			distance := abs(lift.CurrentFloor)
+			if distance < minDistance {
+				minDistance = distance
+				closestLift = lift
+			}
+		}
+	}
+
+	if closestLift == nil {
+		return nil, fmt.Errorf("no available lift found")
+	}
+
+	return closestLift, nil
+}
+
+func (s *LiftService) processLiftRequest(ctx context.Context, floorNum int, direction domain.Direction) {
+	lift, err := s.findAvailableLift(ctx)
+	if err != nil {
+		s.log.Error(ctx, "Failed to find available lift", "error", err)
+		return
+	}
+
+	s.log.Info(ctx, "Lift is Moving", "lift_id", lift.ID, "target_floor", "direction", direction, floorNum, "error", err)
+
+	err = s.MoveLift(ctx, lift.ID, floorNum)
+	if err != nil {
+		s.log.Error(ctx, "Failed to move lift", "lift_id", lift.ID, "target_floor", floorNum, "error", err)
+		return
+	}
+
+	s.log.Info(ctx, "Lift arrived at requested floor", "lift_id", lift.ID, "floor", floorNum)
+	// Publish a LiftArrived event
+	s.eventBus.Publish(domain.LiftArrivedEvent{
+		LiftID:      lift.ID,
+		FloorNumber: floorNum,
+	})
 }

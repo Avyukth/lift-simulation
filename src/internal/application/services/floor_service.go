@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
+	"github.com/Avyukth/lift-simulation/internal/application/events"
 	"github.com/Avyukth/lift-simulation/internal/application/ports"
 	"github.com/Avyukth/lift-simulation/internal/domain"
 	"github.com/Avyukth/lift-simulation/pkg/logger"
@@ -13,88 +13,83 @@ import (
 
 // FloorService handles the business logic for floor operations
 type FloorService struct {
-	repo ports.Repository
-	log  *logger.Logger
+	repo     ports.FloorOperations
+	eventBus events.EventBus
+	log      *logger.Logger
+}
+
+type LiftAssignedHandler struct {
+	service *FloorService
+}
+type LiftArrivedHandler struct {
+	service *FloorService
 }
 
 // NewFloorService creates a new instance of FloorService
-func NewFloorService(repo ports.Repository, log *logger.Logger) *FloorService {
-	return &FloorService{
-		repo: repo,
-		log:  log,
+func NewFloorService(repo ports.FloorOperations, eventBus events.EventBus, log *logger.Logger) *FloorService {
+	service := &FloorService{
+		repo:     repo,
+		eventBus: eventBus,
+		log:      log,
+	}
+	eventBus.Subscribe(domain.LiftAssigned, &LiftAssignedHandler{service: service})
+	eventBus.Subscribe(domain.LiftArrived, &LiftArrivedHandler{service: service})
+	return service
+
+}
+func (h *LiftAssignedHandler) Handle(event domain.Event) {
+	if liftAssignedEvent, ok := event.(domain.LiftAssignedEvent); ok {
+		h.service.handleLiftAssigned(context.Background(), liftAssignedEvent.FloorNumber, liftAssignedEvent.LiftID)
 	}
 }
 
-func (s *FloorService) CallLift(ctx context.Context, floorNum int, direction domain.Direction) (*domain.Lift, error) {
+func (h *LiftArrivedHandler) Handle(event domain.Event) {
+	if liftArrivedEvent, ok := event.(domain.LiftArrivedEvent); ok {
+		h.service.handleLiftArrived(context.Background(), liftArrivedEvent.FloorNumber, liftArrivedEvent.LiftID)
+	}
+}
+
+func (s *FloorService) handleLiftAssigned(ctx context.Context, floorNum int, liftID string) {
+	s.log.Info(ctx, "Lift assigned to floor", "floor", floorNum, "lift_id", liftID)
+	if err := s.updateFloorDisplay(ctx, floorNum, liftID); err != nil {
+		s.log.Error(ctx, "Failed to update floor display", "floor", floorNum, "lift_id", liftID, "error", err)
+	}
+}
+
+func (s *FloorService) handleLiftArrived(ctx context.Context, floorNum int, liftID string) {
+	s.log.Info(ctx, "Lift arrived at floor", "floor", floorNum, "lift_id", liftID)
+	if err := s.ResetFloorButtons(ctx, floorNum); err != nil {
+		s.log.Error(ctx, "Failed to reset floor buttons", "floor", floorNum, "error", err)
+	}
+	if err := s.updateFloorDisplay(ctx, floorNum, liftID); err != nil {
+		s.log.Error(ctx, "Failed to update floor display", "floor", floorNum, "lift_id", liftID, "error", err)
+	}
+}
+
+func (s *FloorService) updateFloorDisplay(ctx context.Context, floorNum int, liftID string) error {
+	// For now, we'll just log the information
+	s.log.Info(ctx, "Floor display updated", "floor", floorNum, "assigned_lift", liftID)
+	return nil
+}
+
+func (s *FloorService) CallLift(ctx context.Context, floorNum int, direction domain.Direction) error {
 	floor, err := s.repo.GetFloorByNumber(ctx, floorNum)
 	if err != nil {
 		if errors.Is(err, domain.ErrFloorNotFound) {
-			return nil, domain.ErrFloorNotFound
+			return domain.ErrFloorNotFound
 		}
-		return nil, fmt.Errorf("failed to get floor %d: %w", floorNum, err)
+		return fmt.Errorf("failed to get floor %d: %w", floorNum, err)
 	}
 
-	// Find an available lift, preferably on the ground floor
-	lift, err := s.findAvailableLift(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to find available lift: %w", err)
+	// Publish a LiftRequested event
+	event := domain.LiftRequestedEvent{
+		FloorNumber: floorNum,
+		Direction:   direction,
 	}
+	s.eventBus.Publish(event)
 
-	// Start asynchronous process to move the lift
-	go s.moveLiftToFloor(context.Background(), lift, floor, direction)
-
-	return lift, nil
-}
-
-func (s *FloorService) findAvailableLift(ctx context.Context) (*domain.Lift, error) {
-	lifts, err := s.repo.GetAllLifts(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get lifts: %w", err)
-	}
-
-	var closestLift *domain.Lift
-	minDistance := int(^uint(0) >> 1) // Max int value
-
-	for _, lift := range lifts {
-		if lift.IsAvailable() {
-			distance := abs(lift.CurrentFloor)
-			if distance < minDistance {
-				minDistance = distance
-				closestLift = lift
-			}
-		}
-	}
-
-	if closestLift == nil {
-		return nil, fmt.Errorf("no available lift found")
-	}
-
-	return closestLift, nil
-}
-
-func (s *FloorService) moveLiftToFloor(ctx context.Context, lift *domain.Lift, targetFloor *domain.Floor, direction domain.Direction) {
-	// Assign lift to the target floor
-	if err := lift.AssignToFloor(targetFloor.Number); err != nil {
-		s.log.Error(ctx, "Failed to assign lift to floor", "error", err)
-		return
-	}
-	s.repo.UpdateLift(ctx, lift)
-
-	// Move lift to the target floor
-	if err := lift.MoveTo(targetFloor.Number); err != nil {
-		s.log.Error(ctx, "Failed to move lift to floor", "error", err)
-		return
-	}
-	s.repo.UpdateLift(ctx, lift)
-
-	// Simulate doors opening and closing
-	time.Sleep(2500 * time.Millisecond) // Doors opening
-	time.Sleep(2500 * time.Millisecond) // Doors closing
-
-	// Set lift back to available
-	lift.SetAvailable()
-	s.repo.UpdateLift(ctx, lift)
-
+	s.log.Info(ctx, "Lift requested", "floor", floor.Number, "direction", direction)
+	return nil
 }
 
 // GetFloorStatus retrieves the current status of a floor

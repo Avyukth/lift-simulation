@@ -17,6 +17,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 
+	"github.com/Avyukth/lift-simulation/internal/application/events"
 	"github.com/Avyukth/lift-simulation/internal/application/services"
 	"github.com/Avyukth/lift-simulation/internal/config"
 	"github.com/Avyukth/lift-simulation/internal/infrastructure/fiber/handlers"
@@ -97,8 +98,9 @@ func run(ctx context.Context, log *logger.Logger, fiberLog *logger.FiberLogger) 
 	// -------------------------------------------------------------------------
 	// Initialize Services
 
-	liftService := services.NewLiftService(repo, hub, log)
-	floorService := services.NewFloorService(repo, log)
+	eventBus := events.NewInMemoryEventBus()
+	liftService := services.NewLiftService(repo, eventBus, hub, log)
+	floorService := services.NewFloorService(repo, eventBus, log)
 	systemService := services.NewSystemService(repo, log)
 
 	liftHandler := handlers.NewLiftHandler(liftService)
