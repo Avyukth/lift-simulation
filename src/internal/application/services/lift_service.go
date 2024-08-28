@@ -226,7 +226,7 @@ func (s *LiftService) processLiftRequest(ctx context.Context, floorNum int, dire
 	floor, err := s.repo.GetFloorByNumber(ctx, floorNum)
 
 	if err != nil {
-		s.log.Error(ctx, "Failed to get floor information", "error", err)
+		s.log.Error(ctx, "Failed to get floor information: %w", err, "floor_num", floorNum)
 		return
 	}
 
