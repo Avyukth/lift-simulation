@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 
 	"github.com/Avyukth/lift-simulation/internal/application/events"
 	"github.com/Avyukth/lift-simulation/internal/application/ports"
@@ -81,7 +82,28 @@ func (s *FloorService) CallLift(ctx context.Context, floorNum int, direction dom
 		return fmt.Errorf("failed to get floor %d: %w", floorNum, err)
 	}
 
-	// Publish a LiftRequested event
+	// Check floor capacity before requesting a lift
+	system, err := s.repo.GetSystem(ctx)
+	if err != nil {
+		s.log.Error(ctx, "Failed to get system information", "error", err)
+		return fmt.Errorf("failed to get system information: %w", err)
+	}
+
+	maxLiftsPerFloor := int(math.Ceil(float64(system.TotalLifts) * 0.1))
+
+	assignedLifts, err := s.repo.GetAssignedLiftsForFloor(ctx, floor.ID)
+	if err != nil {
+		s.log.Error(ctx, "Failed to get assigned lifts for floor", "floor", floorNum, "error", err)
+		return fmt.Errorf("failed to get assigned lifts for floor: %w", err)
+	}
+
+	if len(assignedLifts) >= maxLiftsPerFloor {
+		s.log.Warn(ctx, "Floor has reached maximum lift capacity", "floor", floorNum, "max_capacity", maxLiftsPerFloor)
+		s.eventBus.Publish(domain.FloorAtCapacityEvent{FloorNumber: floorNum})
+		return fmt.Errorf("floor %d has reached maximum lift capacity", floorNum)
+	}
+
+	// If the floor hasn't reached capacity, proceed with the lift request
 	event := domain.LiftRequestedEvent{
 		FloorNumber: floorNum,
 		Direction:   direction,
