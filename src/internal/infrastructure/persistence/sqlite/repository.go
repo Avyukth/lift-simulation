@@ -436,5 +436,15 @@ func (r *Repository) GetAssignedLiftsForFloor(ctx context.Context, floorID strin
 	return lifts, nil
 }
 
+func (r *Repository) UnassignBulk(ctx context.Context) error {
+	query := `DELETE FROM floor_lift_assignments`
+	_, err := r.db.ExecContext(ctx, query)
+	if err != nil {
+		return fmt.Errorf("failed to delete all records from floor_lift_assignments: %w", err)
+	}
+	return nil
+
+}
+
 // Ensure Repository implements ports.Repository interface
 var _ ports.Repository = (*Repository)(nil)

@@ -143,7 +143,7 @@ func (s *SystemService) ResetSystem(ctx context.Context) error {
 	}
 
 	for _, lift := range lifts {
-		lift.Reset() // This should now set CurrentFloor to 0
+		lift.Reset() // This should now set CurrentFloor to
 		if err := s.repo.SaveLift(ctx, lift); err != nil {
 			return fmt.Errorf("failed to save reset lift %s: %w", lift.ID, err)
 		}
@@ -161,6 +161,10 @@ func (s *SystemService) ResetSystem(ctx context.Context) error {
 		}
 	}
 
+	s.repo.UnassignBulk(ctx)
+	if err := s.repo.UnassignBulk(ctx); err != nil {
+		return fmt.Errorf("failed to reset floor to lift assignment %w", err)
+	}
 	return nil
 }
 

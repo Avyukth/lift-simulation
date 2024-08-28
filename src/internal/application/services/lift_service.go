@@ -57,7 +57,7 @@ func (s *LiftService) MoveLift(ctx context.Context, liftID string, targetFloor i
 
 	// Check if the lift is already on the target floor
 	if lift.CurrentFloor == targetFloor {
-		s.log.Info(ctx, "Lift is already on the target floor", "lift_id", liftID, "current_floor", lift.CurrentFloor)
+		s.log.Error(ctx, "Lift is already on the target floor", "lift_id", liftID, "current_floor", lift.CurrentFloor)
 		return fmt.Errorf("lift is already on floor %d", targetFloor)
 	}
 
@@ -93,11 +93,6 @@ func (s *LiftService) MoveLift(ctx context.Context, liftID string, targetFloor i
 	if err := s.repo.UpdateLift(ctx, lift); err != nil {
 		s.log.Error(ctx, "Failed to update lift after move", "lift_id", liftID, "error", err)
 		return fmt.Errorf("failed to update lift after move: %w", err)
-	}
-	err = s.repo.AssignLiftToFloor(ctx, liftID, floor.ID, targetFloor)
-	if err != nil {
-		s.log.Error(ctx, "Failed to assign lift to floor", "lift_id", liftID, "floor", targetFloor, "error", err)
-		return fmt.Errorf("failed to assign lift to floor: %w", err)
 	}
 
 	s.log.Info(ctx, "Successfully moved lift", "lift_id", liftID, "target_floor", targetFloor)
@@ -229,7 +224,7 @@ func (s *LiftService) processLiftRequest(ctx context.Context, floorNum int, dire
 	floor, err := s.repo.GetFloorByNumber(ctx, floorNum)
 
 	if err != nil {
-		s.log.Error(ctx, "Failed to get system information", "error", err)
+		s.log.Error(ctx, "Failed to get floor information", "error", err)
 		return
 	}
 
