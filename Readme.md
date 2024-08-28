@@ -149,17 +149,17 @@ To see the system API details.
 - `Makefile`: Defines commands for building, running, and managing the project
 - `docker-compose.yml`: Defines the multi-container Docker environment
 
-## Contributing
+## Things Covered
 
-We welcome contributions to the Lift Simulation System! Please read our contributing guidelines before submitting pull requests.
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Acknowledgments
-
-- Thanks to all contributors who have helped shape this project
-- Inspired by real-world elevator systems and simulation techniques
-
-For more information, please contact the project maintainers.
+- [x] Documentation using open api docs
+- [x] Dockerized
+- [ ] Middleware with JWT authentication
+- [x] Logging with Sugar logger
+- [x] Microservice architecture
+- [x] Onion Layering
+- [x] Database SQLite
+- [ ] Unit testing
+- [ ] Integration testing
+- [ ] Opentelemetry with Prometheus, grafana, Loki, etc
+- [x] github workflow (Deployment WIP)
+- [ ] Separate repo to create Deployment instances in AWS using Pulumi
