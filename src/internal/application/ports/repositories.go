@@ -38,7 +38,7 @@ type LiftFloorManager interface {
 	GetAllFloors(ctx context.Context) ([]*domain.Floor, error)
 	GetFloorByNumber(ctx context.Context, floorNum int) (*domain.Floor, error)
 	UnassignLiftFromFloor(ctx context.Context, liftID string, floorID string) error
-	AssignLiftToFloor(ctx context.Context, liftID string, floorID string) error
+	AssignLiftToFloor(ctx context.Context, liftID string, floorID string, floorNumber int) error
 	GetAssignedLiftsForFloor(ctx context.Context, floorID string) ([]*domain.Lift, error)
 }
 

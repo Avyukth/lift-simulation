@@ -79,14 +79,14 @@ func (s *LiftService) MoveLift(ctx context.Context, liftID string, targetFloor i
 	}
 
 	// Assign the lift to the target floor
-	targetFloorObj, err := s.repo.GetFloorByNumber(ctx, targetFloor)
+	floor, err := s.repo.GetFloorByNumber(ctx, targetFloor)
 	if err != nil {
 		s.log.Error(ctx, "Failed to get target floor", "floor_number", targetFloor, "error", err)
 		return fmt.Errorf("failed to get target floor: %w", err)
 	}
-	err = s.AssignLiftToFloor(ctx, liftID, targetFloorObj.ID)
+	err = s.AssignLiftToFloor(ctx, liftID, floor.ID, floor.Number)
 	if err != nil {
-		s.log.Error(ctx, "Failed to assign lift to target floor", "lift_id", liftID, "floor_id", targetFloorObj.ID, "error", err)
+		s.log.Error(ctx, "Failed to assign lift to target floor", "lift_id", liftID, "floor_id", floor.ID, "error", err)
 		return fmt.Errorf("failed to assign lift to target floor: %w", err)
 	}
 
@@ -94,7 +94,7 @@ func (s *LiftService) MoveLift(ctx context.Context, liftID string, targetFloor i
 		s.log.Error(ctx, "Failed to update lift after move", "lift_id", liftID, "error", err)
 		return fmt.Errorf("failed to update lift after move: %w", err)
 	}
-	err = s.repo.AssignLiftToFloor(ctx, liftID, fmt.Sprintf("%d", targetFloor))
+	err = s.repo.AssignLiftToFloor(ctx, liftID, floor.ID, targetFloor)
 	if err != nil {
 		s.log.Error(ctx, "Failed to assign lift to floor", "lift_id", liftID, "floor", targetFloor, "error", err)
 		return fmt.Errorf("failed to assign lift to floor: %w", err)
@@ -156,7 +156,7 @@ func (s *LiftService) SetLiftStatus(ctx context.Context, liftID string, status d
 }
 
 // AssignLiftToFloor assigns a lift to a floor
-func (s *LiftService) AssignLiftToFloor(ctx context.Context, liftID string, floorID string) error {
+func (s *LiftService) AssignLiftToFloor(ctx context.Context, liftID string, floorID string, floorNum int) error {
 	// Check if there are already two lifts assigned to this floor
 	assignedLifts, err := s.repo.GetAssignedLiftsForFloor(ctx, floorID)
 	if err != nil {
@@ -167,7 +167,7 @@ func (s *LiftService) AssignLiftToFloor(ctx context.Context, liftID string, floo
 	}
 
 	// Assign the lift to the floor
-	err = s.repo.AssignLiftToFloor(ctx, liftID, floorID)
+	err = s.repo.AssignLiftToFloor(ctx, liftID, floorID, floorNum)
 	if err != nil {
 		return fmt.Errorf("failed to assign lift to floor: %w", err)
 	}
@@ -226,8 +226,14 @@ func (s *LiftService) processLiftRequest(ctx context.Context, floorNum int, dire
 	}
 
 	maxLiftsPerFloor := int(math.Ceil(float64(system.TotalLifts) * 0.1))
+	floor, err := s.repo.GetFloorByNumber(ctx, floorNum)
 
-	assignedLifts, err := s.repo.GetAssignedLiftsForFloor(ctx, fmt.Sprintf("%d", floorNum))
+	if err != nil {
+		s.log.Error(ctx, "Failed to get system information", "error", err)
+		return
+	}
+
+	assignedLifts, err := s.repo.GetAssignedLiftsForFloor(ctx, floor.ID)
 	if err != nil {
 		s.log.Error(ctx, "Failed to get assigned lifts for floor", "floor", floorNum, "error", err)
 		return

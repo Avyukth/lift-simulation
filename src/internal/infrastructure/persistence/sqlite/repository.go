@@ -59,6 +59,7 @@ func createTables(db *sql.DB) error {
 		`CREATE TABLE IF NOT EXISTS floor_lift_assignments (
             floor_id TEXT,
             lift_id TEXT,
+			floor_number INTEGER,
             PRIMARY KEY (floor_id, lift_id),
             FOREIGN KEY (floor_id) REFERENCES floors(id),
             FOREIGN KEY (lift_id) REFERENCES lifts(id)
@@ -385,9 +386,9 @@ func (r *Repository) GetFloorByNumber(ctx context.Context, floorNum int) (*domai
 	return domain.NewFloor(floorID, floorNum), nil
 }
 
-func (r *Repository) AssignLiftToFloor(ctx context.Context, liftID string, floorID string) error {
-	query := `INSERT INTO floor_lift_assignments (floor_id, lift_id) VALUES (?, ?)`
-	_, err := r.db.ExecContext(ctx, query, floorID, liftID)
+func (r *Repository) AssignLiftToFloor(ctx context.Context, liftID string, floorID string, floorNumber int) error {
+	query := `INSERT OR REPLACE INTO floor_lift_assignments (floor_id, lift_id, floor_number) VALUES (?, ?, ?)`
+	_, err := r.db.ExecContext(ctx, query, floorID, liftID, floorNumber)
 	if err != nil {
 		return fmt.Errorf("failed to assign lift to floor: %w", err)
 	}
