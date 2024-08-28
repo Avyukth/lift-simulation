@@ -47,7 +47,7 @@ func createTables(db *sql.DB) error {
 		)`,
 		`CREATE TABLE IF NOT EXISTS floors (
 			id TEXT PRIMARY KEY,
-			floor_number INTEGER,
+			floor_number INTEGER UNIQUE,
 			up_button_active BOOLEAN,
 			down_button_active BOOLEAN
 		)`,
@@ -56,6 +56,13 @@ func createTables(db *sql.DB) error {
 			total_floors INTEGER,
 			total_lifts INTEGER
 		)`,
+		`CREATE TABLE IF NOT EXISTS floor_lift_assignments (
+            floor_id TEXT,
+            lift_id TEXT,
+            PRIMARY KEY (floor_id, lift_id),
+            FOREIGN KEY (floor_id) REFERENCES floors(id),
+            FOREIGN KEY (lift_id) REFERENCES lifts(id)
+        )`,
 	}
 
 	for _, query := range queries {

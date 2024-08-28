@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"math"
 
 	"github.com/Avyukth/lift-simulation/internal/application/events"
 	"github.com/Avyukth/lift-simulation/internal/application/ports"
@@ -93,6 +94,11 @@ func (s *LiftService) MoveLift(ctx context.Context, liftID string, targetFloor i
 		s.log.Error(ctx, "Failed to update lift after move", "lift_id", liftID, "error", err)
 		return fmt.Errorf("failed to update lift after move: %w", err)
 	}
+	err = s.repo.AssignLiftToFloor(ctx, liftID, fmt.Sprintf("%d", targetFloor))
+	if err != nil {
+		s.log.Error(ctx, "Failed to assign lift to floor", "lift_id", liftID, "floor", targetFloor, "error", err)
+		return fmt.Errorf("failed to assign lift to floor: %w", err)
+	}
 
 	s.log.Info(ctx, "Successfully moved lift", "lift_id", liftID, "target_floor", targetFloor)
 	return nil
@@ -109,22 +115,22 @@ func (s *LiftService) ListLifts(ctx context.Context) ([]*domain.Lift, error) {
 }
 
 // findNearestAvailableLift is a helper function to find the nearest available lift
-func (s *LiftService) findNearestAvailableLift(lifts []*domain.Lift, floorNum int, direction domain.Direction) *domain.Lift {
-	var nearestLift *domain.Lift
-	minDistance := int(^uint(0) >> 1) // Max int
+// func (s *LiftService) findNearestAvailableLift(lifts []*domain.Lift, floorNum int, direction domain.Direction) *domain.Lift {
+// 	var nearestLift *domain.Lift
+// 	minDistance := int(^uint(0) >> 1) // Max int
 
-	for _, lift := range lifts {
-		if lift.IsAvailable() {
-			distance := abs(lift.CurrentFloor - floorNum)
-			if distance < minDistance || (distance == minDistance && lift.Direction == direction) {
-				minDistance = distance
-				nearestLift = lift
-			}
-		}
-	}
+// 	for _, lift := range lifts {
+// 		if lift.IsAvailable() {
+// 			distance := abs(lift.CurrentFloor - floorNum)
+// 			if distance < minDistance || (distance == minDistance && lift.Direction == direction) {
+// 				minDistance = distance
+// 				nearestLift = lift
+// 			}
+// 		}
+// 	}
 
-	return nearestLift
-}
+// 	return nearestLift
+// }
 
 // abs returns the absolute value of an int
 func abs(x int) int {
@@ -213,13 +219,34 @@ func (s *LiftService) findAvailableLift(ctx context.Context) (*domain.Lift, erro
 }
 
 func (s *LiftService) processLiftRequest(ctx context.Context, floorNum int, direction domain.Direction) {
+	system, err := s.repo.GetSystem(ctx)
+	if err != nil {
+		s.log.Error(ctx, "Failed to get system information", "error", err)
+		return
+	}
+
+	maxLiftsPerFloor := int(math.Ceil(float64(system.TotalLifts) * 0.1))
+
+	assignedLifts, err := s.repo.GetAssignedLiftsForFloor(ctx, fmt.Sprintf("%d", floorNum))
+	if err != nil {
+		s.log.Error(ctx, "Failed to get assigned lifts for floor", "floor", floorNum, "error", err)
+		return
+	}
+
+	if len(assignedLifts) >= maxLiftsPerFloor {
+		s.log.Warn(ctx, "Floor has reached maximum lift capacity", "floor", floorNum, "max_capacity", maxLiftsPerFloor)
+		// Publish an event or notify the requester that the floor is at capacity
+		s.eventBus.Publish(domain.FloorAtCapacityEvent{FloorNumber: floorNum})
+		return
+	}
+
 	lift, err := s.findAvailableLift(ctx)
 	if err != nil {
 		s.log.Error(ctx, "Failed to find available lift", "error", err)
 		return
 	}
 
-	s.log.Info(ctx, "Lift is Moving", "lift_id", lift.ID, "target_floor", "direction", direction, floorNum, "error", err)
+	s.log.Info(ctx, "Lift is Moving", "lift_id", lift.ID, "target_floor", floorNum, "direction", direction)
 
 	err = s.MoveLift(ctx, lift.ID, floorNum)
 	if err != nil {
@@ -228,6 +255,7 @@ func (s *LiftService) processLiftRequest(ctx context.Context, floorNum int, dire
 	}
 
 	s.log.Info(ctx, "Lift arrived at requested floor", "lift_id", lift.ID, "floor", floorNum)
+
 	// Publish a LiftArrived event
 	s.eventBus.Publish(domain.LiftArrivedEvent{
 		LiftID:      lift.ID,

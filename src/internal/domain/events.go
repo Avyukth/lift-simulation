@@ -7,10 +7,11 @@ const (
 	LiftArrived
 	LiftAssigned
 	FloorButtonPressed
+	FloorAtCapacity
 )
 
 func (e EventType) String() string {
-	return [...]string{"LiftRequested", "LiftArrived", "LiftAssigned", "FloorButtonPressed"}[e]
+	return [...]string{"LiftRequested", "LiftArrived", "LiftAssigned", "FloorButtonPressed", "FloorAtCapacity"}[e]
 }
 
 type Event interface {
@@ -43,4 +44,12 @@ type LiftAssignedEvent struct {
 
 func (e LiftAssignedEvent) Type() EventType {
 	return LiftAssigned
+}
+
+type FloorAtCapacityEvent struct {
+	FloorNumber int
+}
+
+func (e FloorAtCapacityEvent) Type() EventType {
+	return FloorAtCapacity
 }
