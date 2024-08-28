@@ -37,11 +37,16 @@ func (s *SystemService) ConfigureSystem(ctx context.Context, floors, lifts int) 
 	if lifts > maxLifts {
 		return fmt.Errorf("invalid number of lifts: must be less than or equal to %.0f%% of the number of floors (maximum %d lifts for %d floors)", 75.0, maxLifts, floors)
 	}
+	system, err := s.repo.GetSystem(ctx)
+	if err == nil && system != nil {
+		return fmt.Errorf("system exists with system id: %s, Total Floor : %d, Total Lifts : %d", system.ID, system.TotalFloors, system.TotalLifts)
+	}
+
 	s.log.Info(ctx, "Configuring system", "total_floors", floors, "total_lifts", lifts)
 
 	// Create a new system
 	systemID := uuid.New().String()
-	system, err := domain.NewSystem(systemID, floors, lifts)
+	system, err = domain.NewSystem(systemID, floors, lifts)
 	if err != nil {
 		s.log.Error(ctx, "Failed to create system configuration", "error", err)
 		return fmt.Errorf("failed to create system configuration: %w", err)
@@ -161,7 +166,6 @@ func (s *SystemService) ResetSystem(ctx context.Context) error {
 		}
 	}
 
-	s.repo.UnassignBulk(ctx)
 	if err := s.repo.UnassignBulk(ctx); err != nil {
 		return fmt.Errorf("failed to reset floor to lift assignment %w", err)
 	}
