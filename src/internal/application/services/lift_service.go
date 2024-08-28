@@ -164,6 +164,7 @@ func (s *LiftService) AssignLiftToFloor(ctx context.Context, liftID string, floo
 	// Assign the lift to the floor
 	err = s.repo.AssignLiftToFloor(ctx, liftID, floorID, floorNum)
 	if err != nil {
+		s.log.Error(ctx, "failed to assign lift to  floor: %w", err, "lift_id", liftID, "floor_id", floorID)
 		return fmt.Errorf("failed to assign lift to floor: %w", err)
 	}
 
@@ -175,6 +176,7 @@ func (s *LiftService) AssignLiftToFloor(ctx context.Context, liftID string, floo
 func (s *LiftService) UnassignLiftFromFloor(ctx context.Context, liftID string, floorID string) error {
 	err := s.repo.UnassignLiftFromFloor(ctx, liftID, floorID)
 	if err != nil {
+		s.log.Error(ctx, "failed to unassign lift from floor: %w", err, "lift_id", liftID, "floor_id", floorID)
 		return fmt.Errorf("failed to unassign lift from floor: %w", err)
 	}
 
