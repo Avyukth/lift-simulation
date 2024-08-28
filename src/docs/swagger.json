@@ -110,49 +110,6 @@
         }
       }
     },
-    "/system/metrics": {
-      "get": {
-        "summary": "Retrieve system performance metrics",
-        "responses": {
-          "200": {
-            "description": "System performance metrics",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SystemMetrics"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Failed to retrieve system metrics"
-          }
-        }
-      }
-    },
-    "/system/simulate-traffic": {
-      "post": {
-        "summary": "Simulate lift traffic in the system",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/TrafficSimulation"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Traffic simulation started"
-          },
-          "500": {
-            "description": "Failed to simulate traffic"
-          }
-        }
-      }
-    },
     "/lifts": {
       "get": {
         "summary": "List all lifts and their current states",
@@ -541,7 +498,7 @@
           },
           "direction": {
             "type": "string",
-            "enum": ["UP", "DOWN"]
+            "enum": [0, 1]
           },
           "timestamp": {
             "type": "string",
@@ -555,7 +512,7 @@
         "properties": {
           "direction": {
             "type": "string",
-            "enum": ["UP", "DOWN"]
+            "enum": [0, 1]
           }
         },
         "required": ["direction"]
