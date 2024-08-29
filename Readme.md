@@ -166,4 +166,4 @@ To see the system API details.
 - [ ] Integration testing
 - [ ] Opentelemetry with Prometheus, grafana, Loki, etc
 - [x] github workflow (Deployment WIP)
-- [ ] Separate repo to create Deployment instances in AWS using Pulumi
+- [x] Separate repo to create Deployment instances in AWS using Pulumi
