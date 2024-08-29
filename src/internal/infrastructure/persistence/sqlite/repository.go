@@ -292,7 +292,7 @@ func (r *Repository) GetSystem(ctx context.Context) (*domain.System, error) {
 	system, err := domain.NewSystem(systemID, totalFloors, totalLifts)
 	if err != nil {
 		r.log.Error(ctx, "Failed to create new system from configuration", "error", err)
-		return nil, fmt.Errorf("Failed to create new system from configuration: %w", err)
+		return nil, fmt.Errorf("failed to create new system from configuration: %w", err)
 	}
 	r.log.Info(ctx, "Successfully retrieved system configuration",
 		"system_id", system.ID,
