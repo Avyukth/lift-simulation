@@ -8,6 +8,10 @@ The Lift Simulation System is a comprehensive solution designed to simulate and 
 
 ## System Architecture
 
+### Control Flow Diagram
+
+<img src="./artifacts/control-dig.png" alt="UML Class Diagram " />
+
 ### UML Class Diagram
 
 <img src="./artifacts/uml-dig.png" alt="UML Class Diagram " />
