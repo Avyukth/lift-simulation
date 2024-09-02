@@ -89,7 +89,7 @@ func (s *FloorService) CallLift(ctx context.Context, floorNum int, direction dom
 		return fmt.Errorf("failed to get system information: %w", err)
 	}
 
-	maxLiftsPerFloor := int(math.Ceil(float64(system.TotalLifts) * 0.1))
+	maxLiftsPerFloor := max(int(math.Ceil(float64(system.TotalLifts)*0.1)), 2)
 
 	assignedLifts, err := s.repo.GetAssignedLiftsForFloor(ctx, floor.ID)
 	if err != nil {

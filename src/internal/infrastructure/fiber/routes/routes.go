@@ -64,8 +64,10 @@ func SetupRoutes(config config.RouteConfig) {
 	// Lift routes
 	lifts := api.Group("/lifts")
 	lifts.Get("/", liftHandler.ListLifts)
+	lifts.Put("/reset", liftHandler.ResetLifts)
 	lifts.Get("/:id", liftHandler.GetLift)
 	lifts.Post("/:id/move", systemVerification.VerifyLiftMove(), liftHandler.MoveLift)
+	lifts.Put("/:id/reset", liftHandler.ResetLift)
 	lifts.Put("/:id/status", liftHandler.SetLiftStatus)
 
 	// Floor routes

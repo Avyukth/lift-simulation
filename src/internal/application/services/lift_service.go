@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
 
@@ -264,4 +265,48 @@ func (s *LiftService) processLiftRequest(ctx context.Context, floorNum int, dire
 		LiftID:      lift.ID,
 		FloorNumber: floorNum,
 	})
+}
+
+func (s *LiftService) ResetLift(ctx context.Context, liftID string) error {
+	lift, err := s.repo.GetLift(ctx, liftID)
+	if err != nil {
+		s.log.Error(ctx, "Failed to reset lift", "lift", liftID, "error", err)
+		if errors.Is(err, domain.ErrLiftNotFound) {
+			return domain.ErrLiftNotFound
+		}
+		return fmt.Errorf("failed to get lift: %w", err)
+	}
+
+	// Reset lift properties
+	lift.CurrentFloor = 0
+	lift.Status = domain.LiftStatus(domain.Idle)
+
+	err = s.repo.UpdateLift(ctx, lift)
+	if err != nil {
+		return fmt.Errorf("failed to update lift: %w", err)
+	}
+
+	return nil
+}
+
+func (s *LiftService) ResetLifts(ctx context.Context) error {
+	// Get all lifts
+	lifts, err := s.repo.GetAllLifts(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get all lifts: %w", err)
+	}
+
+	// Reset each lift
+	for _, lift := range lifts {
+		// Create a new lift with the same ID and name, but reset all other properties
+		resetLift := domain.NewLift(lift.ID, lift.Name)
+
+		// Update the lift in the repository
+		err = s.repo.UpdateLift(ctx, resetLift)
+		if err != nil {
+			return fmt.Errorf("failed to update lift %s: %w", lift.ID, err)
+		}
+	}
+
+	return nil
 }

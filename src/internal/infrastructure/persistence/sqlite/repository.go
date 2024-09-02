@@ -38,32 +38,47 @@ func NewRepository(dbPath string, log *logger.Logger) (*Repository, error) {
 // createTables creates the necessary tables if they don't exist
 func createTables(db *sql.DB) error {
 	queries := []string{
-		`CREATE TABLE IF NOT EXISTS lifts (
-			id TEXT PRIMARY KEY,
-			name TEXT UNIQUE,
-			current_floor INTEGER,
-			status TEXT,
-			capacity INTEGER
-		)`,
-		`CREATE TABLE IF NOT EXISTS floors (
-			id TEXT PRIMARY KEY,
-			floor_number INTEGER UNIQUE,
-			up_button_active BOOLEAN,
-			down_button_active BOOLEAN
-		)`,
 		`CREATE TABLE IF NOT EXISTS system (
 			id TEXT PRIMARY KEY,
 			total_floors INTEGER,
 			total_lifts INTEGER
 		)`,
+		`CREATE TABLE IF NOT EXISTS floors (
+			id TEXT PRIMARY KEY,
+			floor_number INTEGER UNIQUE,
+			up_button_active BOOLEAN,
+			down_button_active BOOLEAN,
+			system_id TEXT,
+			FOREIGN KEY (system_id) REFERENCES system(id) ON DELETE CASCADE
+		)`,
+		`CREATE TABLE IF NOT EXISTS lifts (
+			id TEXT PRIMARY KEY,
+			name TEXT UNIQUE,
+			current_floor INTEGER,
+			status TEXT,
+			capacity INTEGER,
+			system_id TEXT,
+			FOREIGN KEY (system_id) REFERENCES system(id) ON DELETE CASCADE
+		)`,
 		`CREATE TABLE IF NOT EXISTS floor_lift_assignments (
-            floor_id TEXT,
-            lift_id TEXT,
+			floor_id TEXT,
+			lift_id TEXT,
 			floor_number INTEGER,
-            PRIMARY KEY (floor_id, lift_id),
-            FOREIGN KEY (floor_id) REFERENCES floors(id),
-            FOREIGN KEY (lift_id) REFERENCES lifts(id)
-        )`,
+			PRIMARY KEY (floor_id, lift_id),
+			FOREIGN KEY (floor_id) REFERENCES floors(id) ON DELETE CASCADE,
+			FOREIGN KEY (lift_id) REFERENCES lifts(id) ON DELETE CASCADE
+		)`,
+		`CREATE TRIGGER IF NOT EXISTS delete_system_cascade
+		AFTER DELETE ON system
+		FOR EACH ROW
+		BEGIN
+			DELETE FROM floors WHERE system_id = OLD.id;
+			DELETE FROM lifts WHERE system_id = OLD.id;
+			DELETE FROM floor_lift_assignments
+			WHERE floor_id IN (SELECT id FROM floors WHERE system_id = OLD.id)
+			OR lift_id IN (SELECT id FROM lifts WHERE system_id = OLD.id);
+		END;`,
+		`PRAGMA foreign_keys = ON;`,
 	}
 
 	for _, query := range queries {
@@ -444,6 +459,25 @@ func (r *Repository) UnassignBulk(ctx context.Context) error {
 	}
 	return nil
 
+}
+
+func (r *Repository) ResetSystem(ctx context.Context, systemID string) error {
+	query := `DELETE FROM system WHERE id = ?`
+	result, err := r.db.ExecContext(ctx, query, systemID)
+	if err != nil {
+		return fmt.Errorf("failed to delete system record: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("no system found with ID: %s", systemID)
+	}
+
+	return nil
 }
 
 // Ensure Repository implements ports.Repository interface

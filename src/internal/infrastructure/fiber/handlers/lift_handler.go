@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/Avyukth/lift-simulation/internal/application/services"
@@ -94,4 +95,41 @@ func (h *LiftHandler) SetLiftStatus(c *fiber.Ctx) error {
 	}
 
 	return c.SendStatus(fiber.StatusOK)
+}
+
+func (h *LiftHandler) ResetLift(c *fiber.Ctx) error {
+	liftID := c.Params("id")
+
+	err := h.liftService.ResetLift(c.Context(), liftID)
+	if err != nil {
+
+		// Check for specific error types and return appropriate status codes
+		switch {
+		case errors.Is(err, domain.ErrLiftNotFound):
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"error": "Lift not found",
+			})
+		default:
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": "Failed to reset lift",
+			})
+		}
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "Lift reset successfully",
+	})
+}
+
+func (h *LiftHandler) ResetAllLifts(c *fiber.Ctx) error {
+	err := h.liftService.ResetLifts(c.Context())
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to reset all lifts",
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "All lifts reset successfully",
+	})
 }

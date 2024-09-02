@@ -134,41 +134,55 @@ func (s *SystemService) GetSystemStatus(ctx context.Context) (*domain.SystemStat
 }
 
 // ResetSystem resets the entire lift system to its initial state
+// func (s *SystemService) ResetSystem(ctx context.Context) error {
+// 	system, err := s.repo.GetSystem(ctx)
+// 	if err != nil {
+// 		return fmt.Errorf("failed to get system configuration: %w", err)
+// 	}
+
+// 	// Reset all lifts to ground floor (now floor 0)
+// 	lifts, err := s.repo.GetAllLifts(ctx)
+// 	s.log.Info(ctx, "Resetting system", "lifts", lifts)
+// 	if err != nil {
+// 		return fmt.Errorf("failed to get lifts: %w", err)
+// 	}
+
+// 	for _, lift := range lifts {
+// 		lift.Reset() // This should now set CurrentFloor to
+// 		if err := s.repo.SaveLift(ctx, lift); err != nil {
+// 			return fmt.Errorf("failed to save reset lift %s: %w", lift.ID, err)
+// 		}
+// 	}
+
+// 	// Reset all floor buttons
+// 	for i := 0; i < system.TotalFloors; i++ {
+// 		floor, err := s.repo.GetFloorByNumber(ctx, i)
+// 		if err != nil {
+// 			return fmt.Errorf("failed to get floor %d: %w", i, err)
+// 		}
+// 		floor.ResetButtons()
+// 		if err := s.repo.SaveFloor(ctx, floor); err != nil {
+// 			return fmt.Errorf("failed to save reset floor %d: %w", i, err)
+// 		}
+// 	}
+
+// 	if err := s.repo.UnassignBulk(ctx); err != nil {
+// 		return fmt.Errorf("failed to reset floor to lift assignment %w", err)
+// 	}
+
+// 	return nil
+// }
+
 func (s *SystemService) ResetSystem(ctx context.Context) error {
 	system, err := s.repo.GetSystem(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get system configuration: %w", err)
 	}
 
-	// Reset all lifts to ground floor (now floor 0)
-	lifts, err := s.repo.GetAllLifts(ctx)
-	s.log.Info(ctx, "Resetting system", "lifts", lifts)
-	if err != nil {
-		return fmt.Errorf("failed to get lifts: %w", err)
+	if err := s.repo.ResetSystem(ctx, system); err != nil {
+		return fmt.Errorf("all system reset %w", err)
 	}
 
-	for _, lift := range lifts {
-		lift.Reset() // This should now set CurrentFloor to
-		if err := s.repo.SaveLift(ctx, lift); err != nil {
-			return fmt.Errorf("failed to save reset lift %s: %w", lift.ID, err)
-		}
-	}
-
-	// Reset all floor buttons
-	for i := 0; i < system.TotalFloors; i++ {
-		floor, err := s.repo.GetFloorByNumber(ctx, i)
-		if err != nil {
-			return fmt.Errorf("failed to get floor %d: %w", i, err)
-		}
-		floor.ResetButtons()
-		if err := s.repo.SaveFloor(ctx, floor); err != nil {
-			return fmt.Errorf("failed to save reset floor %d: %w", i, err)
-		}
-	}
-
-	if err := s.repo.UnassignBulk(ctx); err != nil {
-		return fmt.Errorf("failed to reset floor to lift assignment %w", err)
-	}
 	return nil
 }
 
