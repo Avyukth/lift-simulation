@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Lift Simulation API",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "description": "API for managing a lift simulation system"
   },
   "servers": [
@@ -110,6 +110,49 @@
         }
       }
     },
+    "/system/metrics": {
+      "get": {
+        "summary": "Get system metrics",
+        "responses": {
+          "200": {
+            "description": "System metrics",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemMetrics"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Failed to retrieve system metrics"
+          }
+        }
+      }
+    },
+    "/system/simulate-traffic": {
+      "post": {
+        "summary": "Simulate traffic in the lift system",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TrafficSimulation"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Traffic simulation started successfully"
+          },
+          "500": {
+            "description": "Failed to start traffic simulation"
+          }
+        }
+      }
+    },
     "/lifts": {
       "get": {
         "summary": "List all lifts and their current states",
@@ -129,6 +172,19 @@
           },
           "500": {
             "description": "Failed to retrieve lifts"
+          }
+        }
+      }
+    },
+    "/lifts/reset": {
+      "put": {
+        "summary": "Reset all lifts",
+        "responses": {
+          "200": {
+            "description": "All lifts reset successfully"
+          },
+          "500": {
+            "description": "Failed to reset lifts"
           }
         }
       }
@@ -192,6 +248,29 @@
           },
           "500": {
             "description": "Failed to move lift"
+          }
+        }
+      }
+    },
+    "/lifts/{liftId}/reset": {
+      "put": {
+        "summary": "Reset a specific lift",
+        "parameters": [
+          {
+            "name": "liftId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lift reset successfully"
+          },
+          "500": {
+            "description": "Failed to reset lift"
           }
         }
       }
@@ -362,169 +441,6 @@
             "description": "Failed to reset floor buttons"
           }
         }
-      }
-    }
-  },
-  "components": {
-    "schemas": {
-      "SystemConfig": {
-        "type": "object",
-        "properties": {
-          "floors": {
-            "type": "integer",
-            "minimum": 2
-          },
-          "lifts": {
-            "type": "integer",
-            "minimum": 1
-          }
-        },
-        "required": ["floors", "lifts"]
-      },
-      "SystemStatus": {
-        "type": "object",
-        "properties": {
-          "totalFloors": {
-            "type": "integer"
-          },
-          "totalLifts": {
-            "type": "integer"
-          },
-          "activeLifts": {
-            "type": "integer"
-          },
-          "pendingCalls": {
-            "type": "integer"
-          }
-        }
-      },
-      "SystemMetrics": {
-        "type": "object",
-        "properties": {
-          "averageWaitTime": {
-            "type": "number"
-          },
-          "totalTrips": {
-            "type": "integer"
-          },
-          "busyHours": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        }
-      },
-      "TrafficSimulation": {
-        "type": "object",
-        "properties": {
-          "duration": {
-            "type": "integer"
-          },
-          "intensity": {
-            "type": "string",
-            "enum": ["LOW", "MEDIUM", "HIGH"]
-          }
-        },
-        "required": ["duration", "intensity"]
-      },
-      "Lift": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "currentFloor": {
-            "type": "integer"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "IDLE",
-              "MOVING_UP",
-              "MOVING_DOWN",
-              "DOOR_OPENING",
-              "DOOR_CLOSING"
-            ]
-          }
-        },
-        "required": ["id", "currentFloor", "status"]
-      },
-      "MoveRequest": {
-        "type": "object",
-        "properties": {
-          "targetFloor": {
-            "type": "integer"
-          }
-        },
-        "required": ["targetFloor"]
-      },
-      "LiftStatusUpdate": {
-        "type": "object",
-        "properties": {
-          "status": {
-            "type": "string",
-            "enum": [
-              "IDLE",
-              "MOVING_UP",
-              "MOVING_DOWN",
-              "DOOR_OPENING",
-              "DOOR_CLOSING"
-            ]
-          }
-        },
-        "required": ["status"]
-      },
-      "Floor": {
-        "type": "object",
-        "properties": {
-          "number": {
-            "type": "integer"
-          },
-          "upButtonPressed": {
-            "type": "boolean"
-          },
-          "downButtonPressed": {
-            "type": "boolean"
-          }
-        },
-        "required": ["number", "upButtonPressed", "downButtonPressed"]
-      },
-      "FloorCall": {
-        "type": "object",
-        "properties": {
-          "floorNumber": {
-            "type": "integer"
-          },
-          "direction": {
-            "type": "string",
-            "enum": [0, 1]
-          },
-          "timestamp": {
-            "type": "string",
-            "format": "date-time"
-          }
-        },
-        "required": ["floorNumber", "direction", "timestamp"]
-      },
-      "CallRequest": {
-        "type": "object",
-        "properties": {
-          "direction": {
-            "type": "string",
-            "enum": [0, 1]
-          }
-        },
-        "required": ["direction"]
-      },
-      "ErrorResponse": {
-        "type": "object",
-        "properties": {
-          "error": {
-            "type": "string"
-          }
-        },
-        "required": ["error"]
       }
     }
   }

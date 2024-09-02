@@ -33,10 +33,10 @@ func (s *SystemService) ConfigureSystem(ctx context.Context, floors, lifts int) 
 	if lifts < 1 {
 		return fmt.Errorf("invalid number of lifts: must be at least 1")
 	}
-	maxLifts := int(math.Ceil(float64(floors) * 0.75))
-	if lifts > maxLifts {
-		return fmt.Errorf("invalid number of lifts: must be less than or equal to %.0f%% of the number of floors (maximum %d lifts for %d floors)", 75.0, maxLifts, floors)
-	}
+	// maxLifts := int(math.Ceil(float64(floors) * 0.75))
+	// if lifts > maxLifts {
+	// 	return fmt.Errorf("invalid number of lifts: must be less than or equal to %.0f%% of the number of floors (maximum %d lifts for %d floors)", 75.0, maxLifts, floors)
+	// }
 	system, err := s.repo.GetSystem(ctx)
 	if err == nil && system != nil {
 		return fmt.Errorf("system exists with system id: %s, Total Floor : %d, Total Lifts : %d", system.ID, system.TotalFloors, system.TotalLifts)
