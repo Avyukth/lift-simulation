@@ -121,7 +121,7 @@ func (h *LiftHandler) ResetLift(c *fiber.Ctx) error {
 	})
 }
 
-func (h *LiftHandler) ResetAllLifts(c *fiber.Ctx) error {
+func (h *LiftHandler) ResetLifts(c *fiber.Ctx) error {
 	err := h.liftService.ResetLifts(c.Context())
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{

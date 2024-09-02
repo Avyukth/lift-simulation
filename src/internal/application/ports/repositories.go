@@ -29,7 +29,7 @@ type SystemRepository interface {
 	UpdateSystem(ctx context.Context, system *domain.System) error
 	SaveLift(ctx context.Context, lift *domain.Lift) error
 	SaveFloor(ctx context.Context, floor *domain.Floor) error
-	ResetSystem(ctx context.Context, system *domain.System) error
+	ResetSystem(ctx context.Context, systemID string) error
 }
 
 type LiftFloorManager interface {

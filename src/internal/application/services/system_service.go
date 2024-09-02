@@ -179,7 +179,7 @@ func (s *SystemService) ResetSystem(ctx context.Context) error {
 		return fmt.Errorf("failed to get system configuration: %w", err)
 	}
 
-	if err := s.repo.ResetSystem(ctx, system); err != nil {
+	if err := s.repo.ResetSystem(ctx, system.ID); err != nil {
 		return fmt.Errorf("all system reset %w", err)
 	}
 
