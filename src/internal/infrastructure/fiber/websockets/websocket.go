@@ -121,6 +121,7 @@ func WebSocketUpgradeHandler(hub *WebSocketHub) fiber.Handler {
 			_, message, err := c.ReadMessage()
 			if err != nil {
 				if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+					hub.Log.Error(context.Background(), "websocket_error", "Error writing message to client", "error", err)
 					c.Locals("websocket_error", err.Error())
 				}
 				break

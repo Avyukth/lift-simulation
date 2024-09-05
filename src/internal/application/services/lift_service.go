@@ -182,7 +182,6 @@ func (s *LiftService) AssignLiftToFloor(ctx context.Context, liftID, floorID str
 	}
 
 	s.log.Info(ctx, "Lift successfully assigned to floor", "lift_id", liftID, "floor_id", floorID)
-	// time.Sleep(60*time.Second)
 	return nil
 }
 
@@ -193,7 +192,6 @@ func (s *LiftService) UnassignLiftFromFloor(ctx context.Context, liftID string, 
 		s.log.Error(ctx, "failed to unassign lift from floor: %w", err, "lift_id", liftID, "floor_id", floorID)
 		return fmt.Errorf("failed to unassign lift from floor: %w", err)
 	}
-	s.log.Info(ctx, "Lift unassigned from floor=======LiftService", "lift_id", liftID, "floor_id", floorID)
 
 	s.log.Info(ctx, "Lift unassigned from floor", "lift_id", liftID, "floor_id", floorID)
 	return nil
