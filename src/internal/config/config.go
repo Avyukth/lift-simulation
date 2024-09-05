@@ -106,7 +106,7 @@ func LoadConfig(build string) (Config, error) {
 	cfg.DB.Path = viper.GetString("DB_PATH")
 	cwd, err := os.Getwd()
 	fmt.Println("cwd ====================", cwd)
-	fmt.Println("cwd ====================", cfg.DB.Path)
+	fmt.Println("cwd.DB.Path ====================", cfg.DB.Path)
 
 	if err != nil {
 		return cfg, fmt.Errorf("getting current working directory: %w", err)
