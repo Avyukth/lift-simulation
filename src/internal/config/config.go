@@ -83,7 +83,6 @@ func LoadConfig(build string) (Config, error) {
 	if env == "" {
 		env = "development"
 	}
-	fmt.Println("Environment========================: ", env)
 
 	viper.SetConfigFile(fmt.Sprintf("src/.env.%s", env))
 	viper.AutomaticEnv()
@@ -105,8 +104,6 @@ func LoadConfig(build string) (Config, error) {
 	cfg.LogLevel = viper.GetString("LOG_LEVEL")
 	cfg.DB.Path = viper.GetString("DB_PATH")
 	cwd, err := os.Getwd()
-	fmt.Println("cwd ====================", cwd)
-	fmt.Println("cwd.DB.Path ====================", cfg.DB.Path)
 
 	if err != nil {
 		return cfg, fmt.Errorf("getting current working directory: %w", err)
