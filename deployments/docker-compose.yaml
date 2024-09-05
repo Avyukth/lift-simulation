@@ -21,8 +21,8 @@ services:
       - INSIDE_HTTP_PORT=${INSIDE_HTTP_PORT:-8080}
       - INSIDE_HTTPS_PORT=${INSIDE_HTTPS_PORT:-8443}
       - GO_ENV=${ENV:-development}
-      - CERT_FILE=${CERT_FILE:-/app/certs/fullchain.pem}
-      - KEY_FILE=${KEY_FILE:-/app/certs/privkey.pem}
+      - CERT_FILE=${CERT_FILE:-/certs/fullchain.pem}
+      - KEY_FILE=${KEY_FILE:-/certs/privkey.pem}
     volumes:
       - lift-sim-db:/app/db
       - ../src/certs:/app/certs:ro
