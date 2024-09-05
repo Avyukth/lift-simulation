@@ -46,7 +46,7 @@ func (h *LiftAssignedHandler) Handle(event domain.Event) {
 
 func (h *LiftArrivedHandler) Handle(event domain.Event) {
 	if liftArrivedEvent, ok := event.(domain.LiftArrivedEvent); ok {
-		h.service.handleLiftArrived(context.Background(), liftArrivedEvent.FloorNumber, liftArrivedEvent.LiftID)
+		h.service.handleLiftArrived(context.Background(), liftArrivedEvent.LiftID, liftArrivedEvent.FloorNumber)
 	}
 }
 
@@ -57,7 +57,7 @@ func (s *FloorService) handleLiftAssigned(ctx context.Context, floorNum int, lif
 	}
 }
 
-func (s *FloorService) handleLiftArrived(ctx context.Context, floorNum int, liftID string) {
+func (s *FloorService) handleLiftArrived(ctx context.Context, liftID string, floorNum int) {
 	s.log.Info(ctx, "Lift arrived at floor", "floor", floorNum, "lift_id", liftID)
 	if err := s.ResetFloorButtons(ctx, floorNum); err != nil {
 		s.log.Error(ctx, "Failed to reset floor buttons", "floor", floorNum, "error", err)
@@ -92,6 +92,7 @@ func (s *FloorService) CallLift(ctx context.Context, floorNum int, direction dom
 	maxLiftsPerFloor := max(int(math.Ceil(float64(system.TotalLifts)*0.1)), 2)
 
 	assignedLifts, err := s.repo.GetAssignedLiftsForFloor(ctx, floor.ID)
+	s.log.Info(ctx, "Assigned lifts for floor", "floor", floorNum, "assignedLifts", assignedLifts)
 	if err != nil {
 		s.log.Error(ctx, "Failed to get assigned lifts for floor", "floor", floorNum, "error", err)
 		return fmt.Errorf("failed to get assigned lifts for floor: %w", err)

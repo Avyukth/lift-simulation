@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"sync"
 
 	"github.com/Avyukth/lift-simulation/internal/application/events"
 	"github.com/Avyukth/lift-simulation/internal/application/ports"
@@ -18,6 +19,7 @@ type LiftService struct {
 	repo     ports.LiftOperations
 	eventBus events.EventBus
 	wsHub    *ws.WebSocketHub
+	mu       sync.RWMutex
 	log      *logger.Logger
 }
 
@@ -37,6 +39,7 @@ func NewLiftService(repo ports.LiftOperations, eventBus events.EventBus, wsHub *
 		repo:     repo,
 		eventBus: eventBus,
 		wsHub:    wsHub,
+		mu:       sync.RWMutex{},
 		log:      log,
 	}
 
@@ -90,6 +93,7 @@ func (s *LiftService) MoveLift(ctx context.Context, liftID string, targetFloor i
 		s.log.Error(ctx, "Failed to assign lift to target floor", "lift_id", liftID, "floor_id", floor.ID, "error", err)
 		return fmt.Errorf("failed to assign lift to target floor: %w", err)
 	}
+	s.log.Info(ctx, "Failed to Lift--service-----------------------")
 
 	if err := s.repo.UpdateLift(ctx, lift); err != nil {
 		s.log.Error(ctx, "Failed to update lift after move", "lift_id", liftID, "error", err)
@@ -152,24 +156,34 @@ func (s *LiftService) SetLiftStatus(ctx context.Context, liftID string, status d
 }
 
 // AssignLiftToFloor assigns a lift to a floor
-func (s *LiftService) AssignLiftToFloor(ctx context.Context, liftID string, floorID string, floorNum int) error {
+func (s *LiftService) AssignLiftToFloor(ctx context.Context, liftID, floorID string, floorNum int) error {
+	s.log.Info(ctx, "Attempting to assign lift to floor", "lift_id", liftID, "floor_id", floorID, "floor_num", floorNum)
+
+	// Use a mutex to prevent race conditions
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	// Check if there are already two lifts assigned to this floor
 	assignedLifts, err := s.repo.GetAssignedLiftsForFloor(ctx, floorID)
 	if err != nil {
+		s.log.Error(ctx, "Failed to get assigned lifts", "error", err, "floor_id", floorID)
 		return fmt.Errorf("failed to get assigned lifts: %w", err)
 	}
+
 	if len(assignedLifts) >= 2 {
-		return fmt.Errorf("floor already has two lifts assigned")
+		s.log.Warn(ctx, "Floor already has maximum lifts assigned", "floor_id", floorID)
+		return fmt.Errorf("lift capacity exceeded")
 	}
 
 	// Assign the lift to the floor
 	err = s.repo.AssignLiftToFloor(ctx, liftID, floorID, floorNum)
 	if err != nil {
-		s.log.Error(ctx, "failed to assign lift to  floor: %w", err, "lift_id", liftID, "floor_id", floorID)
+		s.log.Error(ctx, "Failed to assign lift to floor", "error", err, "lift_id", liftID, "floor_id", floorID)
 		return fmt.Errorf("failed to assign lift to floor: %w", err)
 	}
 
-	s.log.Info(ctx, "Lift assigned to floor", "lift_id", liftID, "floor_id", floorID)
+	s.log.Info(ctx, "Lift successfully assigned to floor", "lift_id", liftID, "floor_id", floorID)
+	// time.Sleep(60*time.Second)
 	return nil
 }
 
@@ -180,6 +194,7 @@ func (s *LiftService) UnassignLiftFromFloor(ctx context.Context, liftID string, 
 		s.log.Error(ctx, "failed to unassign lift from floor: %w", err, "lift_id", liftID, "floor_id", floorID)
 		return fmt.Errorf("failed to unassign lift from floor: %w", err)
 	}
+	s.log.Info(ctx, "Lift unassigned from floor=======LiftService", "lift_id", liftID, "floor_id", floorID)
 
 	s.log.Info(ctx, "Lift unassigned from floor", "lift_id", liftID, "floor_id", floorID)
 	return nil
@@ -223,7 +238,7 @@ func (s *LiftService) processLiftRequest(ctx context.Context, floorNum int, dire
 		return
 	}
 
-	maxLiftsPerFloor := int(math.Ceil(float64(system.TotalLifts) * 0.1))
+	maxLiftsPerFloor := max(int(math.Ceil(float64(system.TotalLifts)*0.1)), 2)
 	floor, err := s.repo.GetFloorByNumber(ctx, floorNum)
 
 	if err != nil {

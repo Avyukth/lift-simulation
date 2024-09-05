@@ -3,7 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
-	"math"
+	// "math"
 
 	"github.com/Avyukth/lift-simulation/internal/application/ports"
 	"github.com/Avyukth/lift-simulation/internal/domain"
