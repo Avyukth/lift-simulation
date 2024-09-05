@@ -92,15 +92,15 @@ func run(ctx context.Context, log *logger.Logger, fiberLog *logger.FiberLogger) 
 	// -------------------------------------------------------------------------
 	// Initialize WebSocket hub
 
-	hub := ws.NewWebSocketHub()
-	go hub.Run()
+	hub := ws.NewWebSocketHub(log)
+	go hub.Run(ctx)
 
 	// -------------------------------------------------------------------------
 	// Initialize Services
 
 	eventBus := events.NewInMemoryEventBus()
 	liftService := services.NewLiftService(repo, eventBus, hub, log)
-	floorService := services.NewFloorService(repo, eventBus, log)
+	floorService := services.NewFloorService(repo, eventBus, log, hub)
 	systemService := services.NewSystemService(repo, log)
 
 	liftHandler := handlers.NewLiftHandler(liftService)

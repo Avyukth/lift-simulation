@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/Avyukth/lift-simulation/internal/application/ports"
@@ -102,6 +103,15 @@ func LoadConfig(build string) (Config, error) {
 	cfg.Redis.Port = viper.GetInt("REDIS_PORT")
 	cfg.LogLevel = viper.GetString("LOG_LEVEL")
 	cfg.DB.Path = viper.GetString("DB_PATH")
+	cfg.Web.HTTPHostPort = viper.GetString("HTTP_PORT")
+	cwd, err := os.Getwd()
+	if err != nil {
+		return cfg, fmt.Errorf("getting current working directory: %w", err)
+	}
+	cfg.Web.CertFile = filepath.Join(cwd, cfg.Web.CertFile)
+	cfg.Web.KeyFile = filepath.Join(cwd, cfg.Web.KeyFile)
+
+	cfg.DB.Path = filepath.Join(cwd, cfg.DB.Path)
 
 	// Parse the rest of the configuration
 	const prefix = "LIFT"

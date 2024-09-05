@@ -3,7 +3,6 @@ package services
 import (
 	"context"
 	"fmt"
-	"math"
 
 	"github.com/Avyukth/lift-simulation/internal/application/ports"
 	"github.com/Avyukth/lift-simulation/internal/domain"
@@ -62,7 +61,7 @@ func (s *SystemService) ConfigureSystem(ctx context.Context, floors, lifts int) 
 	for i := 0; i < floors; i++ {
 		floorID := uuid.New().String()
 		floor := domain.NewFloor(floorID, i)
-		if err := s.repo.SaveFloor(ctx, floor); err != nil {
+		if err := s.repo.SaveFloor(ctx, floor, systemID); err != nil {
 			s.log.Error(ctx, "Failed to save floor", "floor_number", i, "error", err)
 			return fmt.Errorf("failed to save floor %d: %w", i, err)
 		}
@@ -74,7 +73,7 @@ func (s *SystemService) ConfigureSystem(ctx context.Context, floors, lifts int) 
 		liftID := uuid.New().String()
 		liftName := fmt.Sprintf("L%d", i)
 		lift := domain.NewLift(liftID, liftName)
-		if err := s.repo.SaveLift(ctx, lift); err != nil {
+		if err := s.repo.SaveLift(ctx, lift, systemID); err != nil {
 			s.log.Error(ctx, "Failed to save lift", "lift_name", liftName, "error", err)
 			return fmt.Errorf("failed to save lift %s: %w", liftName, err)
 		}

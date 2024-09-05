@@ -5,10 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"strconv"
 
 	"github.com/Avyukth/lift-simulation/internal/application/events"
 	"github.com/Avyukth/lift-simulation/internal/application/ports"
 	"github.com/Avyukth/lift-simulation/internal/domain"
+	"github.com/Avyukth/lift-simulation/internal/infrastructure/fiber/websockets"
 	"github.com/Avyukth/lift-simulation/pkg/logger"
 )
 
@@ -17,6 +19,7 @@ type FloorService struct {
 	repo     ports.FloorOperations
 	eventBus events.EventBus
 	log      *logger.Logger
+	hub      *websockets.WebSocketHub
 }
 
 type LiftAssignedHandler struct {
@@ -27,11 +30,12 @@ type LiftArrivedHandler struct {
 }
 
 // NewFloorService creates a new instance of FloorService
-func NewFloorService(repo ports.FloorOperations, eventBus events.EventBus, log *logger.Logger) *FloorService {
+func NewFloorService(repo ports.FloorOperations, eventBus events.EventBus, log *logger.Logger, hub *websockets.WebSocketHub) *FloorService {
 	service := &FloorService{
 		repo:     repo,
 		eventBus: eventBus,
 		log:      log,
+		hub:      hub,
 	}
 	eventBus.Subscribe(domain.LiftAssigned, &LiftAssignedHandler{service: service})
 	eventBus.Subscribe(domain.LiftArrived, &LiftArrivedHandler{service: service})
@@ -46,7 +50,7 @@ func (h *LiftAssignedHandler) Handle(event domain.Event) {
 
 func (h *LiftArrivedHandler) Handle(event domain.Event) {
 	if liftArrivedEvent, ok := event.(domain.LiftArrivedEvent); ok {
-		h.service.handleLiftArrived(context.Background(), liftArrivedEvent.FloorNumber, liftArrivedEvent.LiftID)
+		h.service.handleLiftArrived(context.Background(), liftArrivedEvent.LiftID, liftArrivedEvent.FloorNumber)
 	}
 }
 
@@ -57,7 +61,7 @@ func (s *FloorService) handleLiftAssigned(ctx context.Context, floorNum int, lif
 	}
 }
 
-func (s *FloorService) handleLiftArrived(ctx context.Context, floorNum int, liftID string) {
+func (s *FloorService) handleLiftArrived(ctx context.Context, liftID string, floorNum int) {
 	s.log.Info(ctx, "Lift arrived at floor", "floor", floorNum, "lift_id", liftID)
 	if err := s.ResetFloorButtons(ctx, floorNum); err != nil {
 		s.log.Error(ctx, "Failed to reset floor buttons", "floor", floorNum, "error", err)
@@ -70,7 +74,20 @@ func (s *FloorService) handleLiftArrived(ctx context.Context, floorNum int, lift
 func (s *FloorService) updateFloorDisplay(ctx context.Context, floorNum int, liftID string) error {
 	// For now, we'll just log the information
 	s.log.Info(ctx, "Floor display updated", "floor", floorNum, "assigned_lift", liftID)
+	s.sendWebSocketUpdate(ctx, "floor", strconv.Itoa(floorNum), fmt.Sprintf("display_updated:%s", liftID), floorNum)
 	return nil
+}
+
+func (s *FloorService) sendWebSocketUpdate(ctx context.Context, updateType, id, status string, currentFloor int) {
+	update := websockets.StatusUpdate{
+		Type:         updateType,
+		ID:           id,
+		Status:       status,
+		CurrentFloor: currentFloor,
+	}
+
+	s.hub.BroadcastUpdate(update)
+	s.log.Info(ctx, "WebSocket update sent", "type", updateType, "id", id, "status", status)
 }
 
 func (s *FloorService) CallLift(ctx context.Context, floorNum int, direction domain.Direction) error {
@@ -92,6 +109,7 @@ func (s *FloorService) CallLift(ctx context.Context, floorNum int, direction dom
 	maxLiftsPerFloor := max(int(math.Ceil(float64(system.TotalLifts)*0.1)), 2)
 
 	assignedLifts, err := s.repo.GetAssignedLiftsForFloor(ctx, floor.ID)
+	s.log.Info(ctx, "Assigned lifts for floor", "floor", floorNum, "assignedLifts", assignedLifts)
 	if err != nil {
 		s.log.Error(ctx, "Failed to get assigned lifts for floor", "floor", floorNum, "error", err)
 		return fmt.Errorf("failed to get assigned lifts for floor: %w", err)

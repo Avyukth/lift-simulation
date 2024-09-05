@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Lift Simulation API",
-    "version": "1.0.1",
-    "description": "API for managing a lift simulation system"
+    "version": "1.0.3",
+    "description": "API for managing a lift simulation system with real-time updates via WebSocket"
   },
   "servers": [
     {
@@ -13,6 +13,14 @@
     {
       "url": "http://localhost:8080/api/v1",
       "description": "Local development server"
+    },
+    {
+      "url": "wss://projects.subhrajit.me/ws",
+      "description": "WebSocket server"
+    },
+    {
+      "url": "ws://localhost:8080/ws",
+      "description": "Local WebSocket server"
     }
   ],
   "paths": {
@@ -110,6 +118,49 @@
         }
       }
     },
+    "/system/metrics": {
+      "get": {
+        "summary": "Get system metrics",
+        "responses": {
+          "200": {
+            "description": "System metrics",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemMetrics"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Failed to retrieve system metrics"
+          }
+        }
+      }
+    },
+    "/system/simulate-traffic": {
+      "post": {
+        "summary": "Simulate traffic in the lift system",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TrafficSimulation"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Traffic simulation started successfully"
+          },
+          "500": {
+            "description": "Failed to start traffic simulation"
+          }
+        }
+      }
+    },
     "/lifts": {
       "get": {
         "summary": "List all lifts and their current states",
@@ -129,6 +180,19 @@
           },
           "500": {
             "description": "Failed to retrieve lifts"
+          }
+        }
+      }
+    },
+    "/lifts/reset": {
+      "put": {
+        "summary": "Reset all lifts",
+        "responses": {
+          "200": {
+            "description": "All lifts reset successfully"
+          },
+          "500": {
+            "description": "Failed to reset lifts"
           }
         }
       }
@@ -192,6 +256,29 @@
           },
           "500": {
             "description": "Failed to move lift"
+          }
+        }
+      }
+    },
+    "/lifts/{liftId}/reset": {
+      "put": {
+        "summary": "Reset a specific lift",
+        "parameters": [
+          {
+            "name": "liftId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lift reset successfully"
+          },
+          "500": {
+            "description": "Failed to reset lift"
           }
         }
       }
@@ -363,6 +450,30 @@
           }
         }
       }
+    },
+    "/ws": {
+      "get": {
+        "summary": "WebSocket connection for real-time updates",
+        "description": "Establishes a WebSocket connection for receiving real-time updates about lift and floor status changes",
+        "tags": ["WebSocket"],
+        "responses": {
+          "101": {
+            "description": "Switching Protocols to WebSocket"
+          }
+        }
+      }
+    },
+    "/ws/connect": {
+      "get": {
+        "summary": "Upgrade to WebSocket connection",
+        "description": "Upgrades the HTTP connection to a WebSocket connection",
+        "tags": ["WebSocket"],
+        "responses": {
+          "101": {
+            "description": "Switching Protocols to WebSocket"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -498,7 +609,7 @@
           },
           "direction": {
             "type": "string",
-            "enum": [0, 1]
+            "enum": ["UP", "DOWN"]
           },
           "timestamp": {
             "type": "string",
@@ -512,7 +623,7 @@
         "properties": {
           "direction": {
             "type": "string",
-            "enum": [0, 1]
+            "enum": ["UP", "DOWN"]
           }
         },
         "required": ["direction"]
@@ -525,6 +636,54 @@
           }
         },
         "required": ["error"]
+      },
+      "WebSocketMessage": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["subscription", "update"]
+          },
+          "data": {
+            "oneOf": [
+              { "$ref": "#/components/schemas/Subscription" },
+              { "$ref": "#/components/schemas/StatusUpdate" }
+            ]
+          }
+        },
+        "required": ["type", "data"]
+      },
+      "Subscription": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["floor", "lift"]
+          },
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": ["type", "id"]
+      },
+      "StatusUpdate": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["floor", "lift"]
+          },
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "currentFloor": {
+            "type": "integer"
+          }
+        },
+        "required": ["type", "id", "status"]
       }
     }
   }
