@@ -103,7 +103,6 @@ func LoadConfig(build string) (Config, error) {
 	cfg.Redis.Port = viper.GetInt("REDIS_PORT")
 	cfg.LogLevel = viper.GetString("LOG_LEVEL")
 	cfg.DB.Path = viper.GetString("DB_PATH")
-	cfg.Web.HTTPHostPort = viper.GetString("HTTP_PORT")
 	cwd, err := os.Getwd()
 	if err != nil {
 		return cfg, fmt.Errorf("getting current working directory: %w", err)
