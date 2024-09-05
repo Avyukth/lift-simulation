@@ -113,8 +113,9 @@ func LoadConfig(build string) (Config, error) {
 	}
 	cfg.Web.CertFile = filepath.Join(cwd, cfg.Web.CertFile)
 	cfg.Web.KeyFile = filepath.Join(cwd, cfg.Web.KeyFile)
-
-	cfg.DB.Path = filepath.Join(cwd, cfg.DB.Path)
+	if env != "production" {
+		cfg.DB.Path = filepath.Join(cwd, cfg.DB.Path)
+	}
 
 	// Parse the rest of the configuration
 	const prefix = "LIFT"
