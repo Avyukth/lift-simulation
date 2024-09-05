@@ -24,8 +24,8 @@ services:
       - CERT_FILE=${CERT_FILE:-/certs/fullchain.pem}
       - KEY_FILE=${KEY_FILE:-/certs/privkey.pem}
     volumes:
-      - lift-sim-db:/app/db
-      - ../src/certs:/app/certs:ro
+      - lift-sim-db:/db
+      - ../src/certs:/certs:ro
     networks:
       - app-tier
 
