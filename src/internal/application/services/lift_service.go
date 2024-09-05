@@ -93,7 +93,6 @@ func (s *LiftService) MoveLift(ctx context.Context, liftID string, targetFloor i
 		s.log.Error(ctx, "Failed to assign lift to target floor", "lift_id", liftID, "floor_id", floor.ID, "error", err)
 		return fmt.Errorf("failed to assign lift to target floor: %w", err)
 	}
-	s.log.Info(ctx, "Failed to Lift--service-----------------------")
 
 	if err := s.repo.UpdateLift(ctx, lift); err != nil {
 		s.log.Error(ctx, "Failed to update lift after move", "lift_id", liftID, "error", err)

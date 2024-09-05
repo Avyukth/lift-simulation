@@ -163,10 +163,10 @@ func (r *Repository) ListLifts(ctx context.Context) ([]*domain.Lift, error) {
 	return lifts, nil
 }
 
-func (r *Repository) SaveLift(ctx context.Context, lift *domain.Lift) error {
+func (r *Repository) SaveLift(ctx context.Context, lift *domain.Lift, systemID string) error {
 	stmt, err := r.db.PrepareContext(ctx, `
-		INSERT OR REPLACE INTO lifts (id, name, current_floor, status, capacity)
-		VALUES (?, ?, ?, ?, ?)
+		INSERT OR REPLACE INTO lifts (id, name, current_floor, status, capacity, system_id)
+		VALUES (?, ?, ?, ?, ?,?)
 	`)
 	if err != nil {
 		r.log.Error(ctx, "Failed to prepare statement", "error", err)
@@ -188,7 +188,8 @@ func (r *Repository) SaveLift(ctx context.Context, lift *domain.Lift) error {
 		lift.Name,
 		lift.CurrentFloor,
 		statusStr,
-		lift.Capacity)
+		lift.Capacity,
+		systemID)
 	if err != nil {
 		r.log.Error(ctx, "Failed to save lift", "error", err)
 		return fmt.Errorf("failed to save lift: %w", err)
@@ -252,10 +253,10 @@ func (r *Repository) ListFloors(ctx context.Context) ([]*domain.Floor, error) {
 	return floors, nil
 }
 
-func (r *Repository) SaveFloor(ctx context.Context, floor *domain.Floor) error {
+func (r *Repository) SaveFloor(ctx context.Context, floor *domain.Floor, systemID string) error {
 	stmt, err := r.db.PrepareContext(ctx, `
-		INSERT OR REPLACE INTO floors (id, floor_number, up_button_active, down_button_active)
-		VALUES (?, ?, ?, ?)
+		INSERT OR REPLACE INTO floors (id, floor_number, up_button_active, down_button_active, system_id)
+		VALUES (?, ?, ?, ?,?)
 	`)
 	if err != nil {
 		r.log.Error(ctx, "Failed to prepare statement", "error", err)
@@ -273,7 +274,8 @@ func (r *Repository) SaveFloor(ctx context.Context, floor *domain.Floor) error {
 		floor.ID,
 		floor.Number,
 		floor.GetUpButtonActive(),
-		floor.GetDownButtonActive())
+		floor.GetDownButtonActive(),
+		systemID)
 	if err != nil {
 		r.log.Error(ctx, "Failed to save floor", "error", err)
 		return fmt.Errorf("failed to save floor: %w", err)
@@ -443,7 +445,6 @@ func (r *Repository) AssignLiftToFloor(ctx context.Context, liftID, floorID stri
 	if err != nil {
 		return fmt.Errorf("failed to get rows affected: %w", err)
 	}
-	fmt.Println("================rowsAffected=======================", rowsAffected)
 	if rowsAffected == 0 {
 		return fmt.Errorf("failed to assign lift to floor no update happened")
 	}

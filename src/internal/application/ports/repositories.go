@@ -27,8 +27,8 @@ type SystemRepository interface {
 	GetSystem(ctx context.Context) (*domain.System, error)
 	SaveSystem(ctx context.Context, system *domain.System) error
 	UpdateSystem(ctx context.Context, system *domain.System) error
-	SaveLift(ctx context.Context, lift *domain.Lift) error
-	SaveFloor(ctx context.Context, floor *domain.Floor) error
+	SaveLift(ctx context.Context, lift *domain.Lift, systemID string) error
+	SaveFloor(ctx context.Context, floor *domain.Floor, systemID string) error
 	ResetSystem(ctx context.Context, systemID string) error
 }
 
