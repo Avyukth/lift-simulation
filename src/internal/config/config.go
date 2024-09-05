@@ -83,6 +83,7 @@ func LoadConfig(build string) (Config, error) {
 	if env == "" {
 		env = "development"
 	}
+	fmt.Println("Environment========================: ", env)
 
 	viper.SetConfigFile(fmt.Sprintf("src/.env.%s", env))
 	viper.AutomaticEnv()
