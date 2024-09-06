@@ -34,8 +34,169 @@ https://api.subhrajit.me
 - Real-time lift status monitoring
 - Simulated lift movement and door operations
 - RESTful API for easy integration
-- WebSocket support for real-time updates (#WIP)
+- WebSocket support for real-time updates
 - Intelligent lift assignment algorithm (#WIP)
+
+# WebSocket API for Lift Simulation System
+
+This document describes the WebSocket API for real-time updates in the Lift Simulation System.
+
+## Connection
+
+Connect to the WebSocket server using one of the following URLs:
+
+- Secure: `wss://projects.subhrajit.me/ws/connect`
+- Unsecure: `ws://projects.subhrajit.me/ws/connect`
+
+## Message Format
+
+All messages sent and received through the WebSocket connection use JSON format.
+
+### Subscription Message
+
+To subscribe to updates for a specific floor or lift, send a message in the following format:
+
+---
+
+```json
+{
+  "type": "subscription",
+  "data": {
+    "type": "floor",
+    "id": 2
+  }
+}
+```
+
+---
+
+Or for a lift:
+
+---
+
+```json
+{
+  "type": "subscription",
+  "data": {
+    "type": "lift",
+    "id": "7eac5bb4-8d7e-4072-a3f1-ca7b76241e94"
+  }
+}
+```
+
+---
+
+### Update Messages
+
+You will receive update messages in the following format:
+
+For floors:
+
+---
+
+```json
+{
+  "type": "update",
+  "data": {
+    "type": "floor",
+    "id": "2",
+    "status": "display_updated:7eac5bb4-8d7e-4072-a3f1-ca7b76241e94",
+    "currentFloor": 2
+  }
+}
+```
+
+---
+
+For lifts:
+
+---
+
+```json
+{
+  "type": "update",
+  "data": {
+    "type": "lift",
+    "id": "lift1",
+    "status": "MOVING_UP",
+    "currentFloor": 3
+  }
+}
+```
+
+---
+
+## Status Codes
+
+### Lift Status
+
+- `IDLE`: The lift is not moving
+- `MOVING_UP`: The lift is moving upwards
+- `MOVING_DOWN`: The lift is moving downwards
+- `DOOR_OPENING`: The lift doors are opening
+- `DOOR_CLOSING`: The lift doors are closing
+
+### Floor Status
+
+- `display_updated:<lift_id>`: Indicates that a lift has been assigned to this floor
+
+## Example Usage
+
+Here's a simple JavaScript example of how to connect and interact with the WebSocket:
+
+---
+
+```js
+const socket = new WebSocket("wss://projects.subhrajit.me/ws/connect");
+
+socket.onopen = function (event) {
+  console.log("Connected to WebSocket");
+
+  // Subscribe to updates for floor 2
+  socket.send(
+    JSON.stringify({
+      type: "subscription",
+      data: { type: "floor", id: 2 },
+    }),
+  );
+
+  // Subscribe to updates for lift1
+  socket.send(
+    JSON.stringify({
+      type: "subscription",
+      data: { type: "lift", id: "7eac5bb4-8d7e-4072-a3f1-ca7b76241e94" }, // replace with lift id
+    }),
+  );
+};
+
+socket.onmessage = function (event) {
+  const message = JSON.parse(event.data);
+  console.log("Received update:", message);
+
+  // Handle the update based on its type and content
+  if (message.type === "update") {
+    if (message.data.type === "floor") {
+      console.log(`Floor ${message.data.id} updated: ${message.data.status}`);
+    } else if (message.data.type === "lift") {
+      console.log(
+        `Lift ${message.data.id} is now ${message.data.status} on floor ${message.data.currentFloor}`,
+      );
+    }
+  }
+};
+
+socket.onerror = function (error) {
+  console.error("WebSocket Error:", error);
+};
+
+socket.onclose = function (event) {
+  console.log("WebSocket connection closed:", event.code, event.reason);
+};
+```
+
+---
+
+This is necessary information to connect to your WebSocket API, subscribe to updates, and handle incoming messages. It includes examples of message formats, explanations of status codes, and a practical JavaScript example for integration.
 
 NB : The system is still under development. #WIP - Work In Progress
 
