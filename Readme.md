@@ -63,7 +63,7 @@ To subscribe to updates for a specific floor or lift, send a message in the foll
   "type": "subscription",
   "data": {
     "type": "floor",
-    "id": "2"
+    "id": 2
   }
 }
 ```
@@ -79,7 +79,7 @@ Or for a lift:
   "type": "subscription",
   "data": {
     "type": "lift",
-    "id": "lift1"
+    "id": "7eac5bb4-8d7e-4072-a3f1-ca7b76241e94"
   }
 }
 ```
@@ -156,7 +156,7 @@ socket.onopen = function (event) {
   socket.send(
     JSON.stringify({
       type: "subscription",
-      data: { type: "floor", id: "2" },
+      data: { type: "floor", id: 2 },
     }),
   );
 
@@ -164,7 +164,7 @@ socket.onopen = function (event) {
   socket.send(
     JSON.stringify({
       type: "subscription",
-      data: { type: "lift", id: "lift1" },
+      data: { type: "lift", id: "7eac5bb4-8d7e-4072-a3f1-ca7b76241e94" }, // replace with lift id
     }),
   );
 };
