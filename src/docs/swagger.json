@@ -604,8 +604,8 @@
             "type": "integer"
           },
           "direction": {
-            "type": "string",
-            "enum": ["UP", "DOWN"]
+            "type": "integer",
+            "enum": [0, 1]
           },
           "timestamp": {
             "type": "string",
@@ -618,8 +618,8 @@
         "type": "object",
         "properties": {
           "direction": {
-            "type": "string",
-            "enum": ["UP", "DOWN"]
+            "type": "integer",
+            "enum": [0, 1]
           }
         },
         "required": ["direction"]
