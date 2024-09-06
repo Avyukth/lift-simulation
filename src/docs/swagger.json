@@ -15,12 +15,8 @@
       "description": "Local development server"
     },
     {
-      "url": "wss://projects.subhrajit.me/ws",
-      "description": "WebSocket server"
-    },
-    {
-      "url": "ws://localhost:8080/ws",
-      "description": "Local WebSocket server"
+      "url": "wss://projects.subhrajit.me",
+      "description": "WebSocket server (secure)"
     }
   ],
   "paths": {
@@ -651,7 +647,41 @@
             ]
           }
         },
-        "required": ["type", "data"]
+        "required": ["type", "data"],
+        "examples": [
+          {
+            "type": "subscription",
+            "data": {
+              "type": "floor",
+              "id": "2"
+            }
+          },
+          {
+            "type": "update",
+            "data": {
+              "type": "floor",
+              "id": "2",
+              "status": "display_updated:7eac5bb4-8d7e-4072-a3f1-ca7b76241e94",
+              "currentFloor": 2
+            }
+          },
+          {
+            "type": "subscription",
+            "data": {
+              "type": "lift",
+              "id": "lift1"
+            }
+          },
+          {
+            "type": "update",
+            "data": {
+              "type": "lift",
+              "id": "lift1",
+              "status": "MOVING_UP",
+              "currentFloor": 3
+            }
+          }
+        ]
       },
       "Subscription": {
         "type": "object",
