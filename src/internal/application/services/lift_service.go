@@ -202,30 +202,47 @@ func (s *LiftService) GetAssignedLiftsForFloor(ctx context.Context, floorID stri
 	return s.repo.GetAssignedLiftsForFloor(ctx, floorID)
 }
 
-func (s *LiftService) findAvailableLift(ctx context.Context) (*domain.Lift, error) {
+func (s *LiftService) findAvailableLift(ctx context.Context, floor *domain.Floor) (*domain.Lift, error) {
 	lifts, err := s.repo.GetAllLifts(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get lifts: %w", err)
 	}
 
+	var groundFloorLifts []*domain.Lift
 	var closestLift *domain.Lift
 	minDistance := int(^uint(0) >> 1)
 
 	for _, lift := range lifts {
 		if lift.IsAvailable() {
-			distance := abs(lift.CurrentFloor)
-			if distance < minDistance {
-				minDistance = distance
-				closestLift = lift
+			if lift.CurrentFloor == 0 {
+				groundFloorLifts = append(groundFloorLifts, lift)
+			} else {
+				distance := abs(lift.CurrentFloor - floor.Number)
+				if distance < minDistance {
+					minDistance = distance
+					closestLift = lift
+				}
 			}
 		}
 	}
 
-	if closestLift == nil {
-		return nil, fmt.Errorf("no available lift found")
+	if floor.Number == 0 {
+		if closestLift != nil {
+			return closestLift, nil
+		}
 	}
 
-	return closestLift, nil
+	// If there are available lifts on the ground floor, return one of them
+	if len(groundFloorLifts) > 0 {
+		return groundFloorLifts[0], nil
+	}
+
+	// If no ground floor lifts are available, return the closest lift
+	if closestLift != nil {
+		return closestLift, nil
+	}
+
+	return nil, fmt.Errorf("no available lift found")
 }
 
 func (s *LiftService) processLiftRequest(ctx context.Context, floorNum int, direction domain.Direction) {
@@ -256,7 +273,7 @@ func (s *LiftService) processLiftRequest(ctx context.Context, floorNum int, dire
 		return
 	}
 
-	lift, err := s.findAvailableLift(ctx)
+	lift, err := s.findAvailableLift(ctx, floor)
 	if err != nil {
 		s.log.Error(ctx, "Failed to find available lift", "error", err)
 		return
