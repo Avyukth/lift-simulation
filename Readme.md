@@ -277,6 +277,8 @@ Once the system is up and running, you can interact with it using the following 
 - Move a lift: `POST /api/v1/lifts/{liftId}/move`
 - Get lift status: `GET /api/v1/lifts/{liftId}`
 
+- NB: [Interactive video](https://www.loom.com/share/14481881f2974364a98d6c0e33400dc6)
+
 For a complete list of endpoints and their usage, refer to the API documentation.
 
 ## Development
