@@ -70,6 +70,12 @@ func (h *FloorHandler) CallLift(c *fiber.Ctx) error {
 		})
 	}
 
+	if request.Direction < domain.Up || request.Direction > domain.Down {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid direction. Must be 0 (Up), 1 (Down)",
+		})
+	}
+
 	err = h.floorService.CallLift(c.Context(), floorNum, request.Direction)
 	if err != nil {
 		switch {
