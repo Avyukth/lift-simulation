@@ -114,49 +114,6 @@
         }
       }
     },
-    "/system/metrics": {
-      "get": {
-        "summary": "Get system metrics",
-        "responses": {
-          "200": {
-            "description": "System metrics",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SystemMetrics"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Failed to retrieve system metrics"
-          }
-        }
-      }
-    },
-    "/system/simulate-traffic": {
-      "post": {
-        "summary": "Simulate traffic in the lift system",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/TrafficSimulation"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Traffic simulation started successfully"
-          },
-          "500": {
-            "description": "Failed to start traffic simulation"
-          }
-        }
-      }
-    },
     "/lifts": {
       "get": {
         "summary": "List all lifts and their current states",
@@ -331,29 +288,6 @@
           },
           "500": {
             "description": "Failed to retrieve floors"
-          }
-        }
-      }
-    },
-    "/floors/active-calls": {
-      "get": {
-        "summary": "Get all active floor calls",
-        "responses": {
-          "200": {
-            "description": "List of active floor calls",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/FloorCall"
-                  }
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Failed to retrieve active floor calls"
           }
         }
       }
