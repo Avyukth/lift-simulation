@@ -271,6 +271,7 @@ make help
 
 Once the system is up and running, you can interact with it using the following API endpoints:
 
+- Reset the system: `POST /api/v1/system/reset`
 - Configure the system: `POST /api/v1/system/configure`
 - Get system status: `GET /api/v1/system/status`
 - Call a lift: `POST /api/v1/floors/{floorNum}/call`
