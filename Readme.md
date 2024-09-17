@@ -54,33 +54,14 @@ All messages sent and received through the WebSocket connection use JSON format.
 
 ### Subscription Message
 
-To subscribe to updates for a specific floor or lift, send a message in the following format:
+To subscribe to updates for a specific floor , send a message in the following format:
 
 ---
 
 ```json
 {
-  "type": "subscription",
-  "data": {
-    "type": "floor",
-    "id": 2
-  }
-}
-```
-
----
-
-Or for a lift:
-
----
-
-```json
-{
-  "type": "subscription",
-  "data": {
-    "type": "lift",
-    "id": "7eac5bb4-8d7e-4072-a3f1-ca7b76241e94"
-  }
+  "type": "floor",
+  "id": 2
 }
 ```
 
@@ -102,24 +83,6 @@ For floors:
     "id": "2",
     "status": "display_updated:7eac5bb4-8d7e-4072-a3f1-ca7b76241e94",
     "currentFloor": 2
-  }
-}
-```
-
----
-
-For lifts:
-
----
-
-```json
-{
-  "type": "update",
-  "data": {
-    "type": "lift",
-    "id": "lift1",
-    "status": "MOVING_UP",
-    "currentFloor": 3
   }
 }
 ```
